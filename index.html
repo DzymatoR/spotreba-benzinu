@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Spotřeba benzínu</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css?family=Bangers" rel="stylesheet">
+  </head>
+  <body>
+
+    <nav>
+      <ul>
+        <li>Spotřeba benzínu</li><br>
+        <li>Spotřeba energie</li><br>
+        <li>Další...</li>
+      </ul>
+    </nav>
+
+    <kalkulacka>
+      <h1>Spotřeba benzínu</h1>
+
+      <p id="popis" >Vzdálenost (km)</p>
+      <input id="vzdalenost" type="number" name="vzdalenost" value="10" step="0.5" placeholder="km">
+
+      <p id="popis" >Cena (Kč / l)</p>
+      <input id="cena" type="number" name="cena" value="32.9" step="0.5" placeholder="Kč / l">
+
+      <p id="popis" >Spotřeba (l / 100km)</p>
+      <input id="spotreba" type="number" name="spotreba" value="8" step="0.5" placeholder="l / 100 km">
+
+      <p id="popis" >Počet osob</p>
+      <input id="osoby" type="number" name="osoby" value="1" placeholder="osoby">
+      <br>
+      <br>
+      <button id="tlacitko" type="button" name="button">Spočítej mi to!</button>
+
+      <h2>Cena:</h2>
+      <h3 id="celkem">Celkem to vyjde na: <span id="VyraznaCenaC" >XX,XX</span> Kč</h3>
+      <h3 id="jednotlivec">Každý pak zaplatí: <span id="VyraznaCenaJ" >XX,XX</span> Kč</h3>
+
+      <p id="credit">DžyM 2018</p>
+      
+    </kalkulacka>
+
+    <sider>
+      <ul>
+        <li>něco</li><br>
+        <li>něco</li>
+      </ul>
+    </sider>
+
+    <script type="text/javascript" src="script.js">
+
+    </script>
+
+  </body>
+</html>

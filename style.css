@@ -1,0 +1,114 @@
+html{
+  height: 100%;
+}
+
+body {
+  background-color: #325573;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 2px;
+  color: white;
+  margin: 0px;
+  display: flex;
+  flex-flow: row;
+  flex-wrap: wrap;
+  height: 100%;
+}
+
+nav {
+  flex: 1;
+  text-align: right;
+  /* padding-right: 30px; */
+  /* background-color: orange; */
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 20;
+
+}
+
+kalkulacka {
+  /* flex: 3; */
+  background-color: #D9896C;
+  box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+#popis {
+  /* color: red; */
+  text-align: left;
+  padding-left: 20px;
+}
+
+input {
+  background-color: #F2DBAE;
+  color: #325573;
+  height: 30px;
+  min-width: 230px;
+  border-style: none;
+  border-radius: 25px;
+  text-align: center;
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.5) inset;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 2px;
+  font-size: 18px;
+}
+
+button {
+  background-color: #325573;
+  color: white;
+  height: 30px;
+  width: 150px;
+  border-radius: 15px;
+  border-style: groove;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 2px;
+}
+
+#VyraznaCenaC {
+  color: #325573;
+  font-size: 32px;
+}
+
+#VyraznaCenaJ {
+  color: #325573;
+  font-size: 32px;
+}
+
+
+sider {
+  flex: 1;
+  text-align: left;
+  /* padding-left:30px; */
+  /* background-color: orange; */
+}
+
+#credit {
+  font-size: 10px;
+  padding-top: 10em;
+}
+
+
+@media screen and (max-width: 490px) {
+
+  body {
+    flex-flow: column;
+    }
+
+kalkulacka {
+flex: 1;
+max-width: 600px;
+}
+
+  nav {
+    text-align: center;
+    }
+
+  sider {
+    text-align: center;
+  }
+
+}
