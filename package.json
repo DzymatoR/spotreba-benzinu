@@ -1,0 +1,19 @@
+{
+  "name": "spotreba-benzinu",
+  "version": "1.0.0",
+  "description": "Jednoduchá kalkulačka spotřeby benzínu",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DzymatoR/spotreba-benzinu.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DzymatoR/spotreba-benzinu/issues"
+  },
+  "homepage": "https://github.com/DzymatoR/spotreba-benzinu#readme"
+}
