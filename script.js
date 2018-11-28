@@ -16,7 +16,4 @@ tlacitko.addEventListener("click", function(){
   celkem.innerHTML = vypocetSkupina;
   jednotlivec.innerHTML = vypocetJednotlivec;
 
-tlacitko.va
-
-
 })

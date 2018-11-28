@@ -3,6 +3,7 @@ html{
 }
 
 body {
+  
   background-color: #325573;
   font-family: 'Bangers', cursive;
   letter-spacing: 2px;
@@ -14,22 +15,29 @@ body {
   height: 100%;
 }
 
-nav {
-  flex: 1;
-  text-align: right;
-  /* padding-right: 30px; */
-  /* background-color: orange; */
-}
-
 ul {
   list-style-type: none;
   margin: 0;
-  padding: 20;
+  padding: 0;
+}
+
+nav {
+  flex: 1;
+  padding: 20px;
+  text-align: right;
+
+}
+
+sider {
+  flex: 1;
+  padding: 20px;
+  text-align: left;
 
 }
 
 kalkulacka {
-  /* flex: 3; */
+  flex: 3;
+  
   background-color: #D9896C;
   box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.5);
   text-align: center;
@@ -79,13 +87,6 @@ button {
 }
 
 
-sider {
-  flex: 1;
-  text-align: left;
-  /* padding-left:30px; */
-  /* background-color: orange; */
-}
-
 #credit {
   font-size: 10px;
   padding-top: 10em;
@@ -98,10 +99,10 @@ sider {
     flex-flow: column;
     }
 
-kalkulacka {
-flex: 1;
-max-width: 600px;
-}
+  kalkulacka {
+    flex: 1;
+    max-width: 600px;
+  }
 
   nav {
     text-align: center;
