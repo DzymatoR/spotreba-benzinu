@@ -7,7 +7,7 @@ var tlacitko = document.querySelector("#tlacitko");
 var jednotlivec = document.querySelector("#VyraznaCenaJ");
 var celkem = document.querySelector("#VyraznaCenaC");
 
-// ---------- nové prvky (trasa / mapa) ----------
+// ---------- prvky trasy / mapy ----------
 var startAdresa = document.querySelector("#startAdresa");
 var cilAdresa = document.querySelector("#cilAdresa");
 var najitStart = document.querySelector("#najitStart");
@@ -15,15 +15,68 @@ var najitCil = document.querySelector("#najitCil");
 var vypocitatTrasu = document.querySelector("#vypocitatTrasu");
 var vymazatTrasu = document.querySelector("#vymazatTrasu");
 var trasaInfo = document.querySelector("#trasaInfo");
+var mapaHint = document.querySelector("#mapaHint");
 var orsKlic = document.querySelector("#orsKlic");
 var zohlednitPrevyseni = document.querySelector("#zohlednitPrevyseni");
 var prevyseniFactor = document.querySelector("#prevyseniFactor");
 var provoz = document.querySelector("#provoz");
+var prevyseniCheckRow = document.querySelector("#prevyseniCheckRow");
+
+// chipy se stavem trasy
+var chipEmpty = document.querySelector("#chipEmpty");
+var chipDistance = document.querySelector("#chipDistance");
+var chipDistanceVal = document.querySelector("#chipDistanceVal");
+var chipElevation = document.querySelector("#chipElevation");
+var chipElevationVal = document.querySelector("#chipElevationVal");
+var chipDuration = document.querySelector("#chipDuration");
+var chipDurationVal = document.querySelector("#chipDurationVal");
+
+// výsledková karta
+var resultEmpty = document.querySelector("#resultEmpty");
+var resultComputed = document.querySelector("#resultComputed");
+var resultTags = document.querySelector("#resultTags");
+
+// akordeon "Upřesnění"
+var accordionHead = document.querySelector("#accordionHead");
+var accordionBody = document.querySelector("#accordionBody");
+var accordionChevron = document.querySelector("#accordionChevron");
 
 // stoupání aktuální trasy v metrech (naplní se jen když je k dispozici OpenRouteService klíč)
 var aktualniStoupani = 0;
 
-// ---------- výpočet ceny (rozšířený o provoz a převýšení) ----------
+// ---------- akordeon: klik na hlavičku otevře/zavře Upřesnění ----------
+accordionHead.addEventListener("click", function () {
+  var otevreno = !accordionBody.hidden;
+  accordionBody.hidden = otevreno;
+  accordionChevron.classList.toggle("chev-open", !otevreno);
+});
+
+// ---------- zvýraznění checkboxu "Zohlednit převýšení" ----------
+function aktualizujCheckRow() {
+  prevyseniCheckRow.style.borderColor = zohlednitPrevyseni.checked ? "var(--terra)" : "var(--line)";
+  prevyseniCheckRow.style.background = zohlednitPrevyseni.checked ? "var(--cream-soft)" : "var(--surface)";
+}
+zohlednitPrevyseni.addEventListener("change", aktualizujCheckRow);
+aktualizujCheckRow();
+
+// ---------- pomocníci pro formátování ----------
+function formatujCas(sekundy) {
+  var minutyCelkem = Math.round(sekundy / 60);
+  var h = Math.floor(minutyCelkem / 60);
+  var m = minutyCelkem % 60;
+  if (h > 0) { return h + " h " + m + " min"; }
+  return m + " min";
+}
+
+function nazevProvozu(hodnota) {
+  var moznosti = provoz.options;
+  for (var i = 0; i < moznosti.length; i++) {
+    if (moznosti[i].value === hodnota) { return moznosti[i].text; }
+  }
+  return "";
+}
+
+// ---------- výpočet ceny ----------
 tlacitko.addEventListener("click", function () {
   var koeficientProvozu = Number(provoz.value) || 1;
   var efektivniSpotreba = Number(spotreba.value) * koeficientProvozu;
@@ -39,8 +92,27 @@ tlacitko.addEventListener("click", function () {
   var vypocetSkupina = (celkoveLitry * Number(cena.value)).toFixed(2);
   var vypocetJednotlivec = (vypocetSkupina / Number(osoby.value)).toFixed(2);
 
-  celkem.innerHTML = vypocetSkupina;
-  jednotlivec.innerHTML = vypocetJednotlivec;
+  celkem.textContent = vypocetSkupina.replace(".", ",");
+  jednotlivec.textContent = vypocetJednotlivec.replace(".", ",");
+
+  // tagy shrnující vstupy pod výslednou cenou
+  resultTags.innerHTML = "";
+  var tagy = [
+    Number(vzdalenost.value).toLocaleString("cs-CZ") + " km",
+    Number(spotreba.value).toLocaleString("cs-CZ") + " l/100 km" +
+      (litryZaPrevyseni > 0 ? " (+ převýšení)" : ""),
+    Number(cena.value).toLocaleString("cs-CZ") + " Kč/l",
+    Number(osoby.value) + " " + (Number(osoby.value) === 1 ? "osoba" : "osob") + " · " + nazevProvozu(provoz.value)
+  ];
+  tagy.forEach(function (text) {
+    var span = document.createElement("span");
+    span.className = "tag";
+    span.textContent = text;
+    resultTags.appendChild(span);
+  });
+
+  resultEmpty.hidden = true;
+  resultComputed.hidden = false;
 });
 
 // ---------- mapa (Leaflet + OpenStreetMap) ----------
@@ -48,7 +120,8 @@ tlacitko.addEventListener("click", function () {
 // zbytek stránky (uložení ORS klíče apod.) i základní kalkulačka výše zůstanou funkční.
 try {
 
-var mapa = L.map("mapa").setView([49.8, 15.5], 7); // střed přibližně na ČR/střední Evropu
+var mapa = L.map("mapa", { zoomControl: false }).setView([49.8, 15.5], 7); // střed přibližně na ČR/střední Evropu
+L.control.zoom({ position: "topright" }).addTo(mapa);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
@@ -64,6 +137,7 @@ var cilBod = null;
 
 function nastavStart(lat, lon, popisek) {
   startBod = { lat: lat, lon: lon };
+  mapaHint.hidden = true;
   if (startMarker) {
     startMarker.setLatLng([lat, lon]);
   } else {
@@ -86,29 +160,33 @@ function nastavCil(lat, lon, popisek) {
   }
 }
 
-// klik do mapy: 1. klik = start, 2. klik = cíl, 3. klik = znovu od startu
-mapa.on("click", function (e) {
-  if (!startBod || (startBod && cilBod)) {
-    // začínáme novou trasu
-    if (startMarker) { mapa.removeLayer(startMarker); startMarker = null; }
-    if (cilMarker) { mapa.removeLayer(cilMarker); cilMarker = null; }
-    if (trasaVrstva) { mapa.removeLayer(trasaVrstva); trasaVrstva = null; }
-    cilBod = null;
-    nastavStart(e.latlng.lat, e.latlng.lng, "z mapy");
-  } else {
-    nastavCil(e.latlng.lat, e.latlng.lng, "z mapy");
-  }
-});
-
-document.querySelector("#vymazatTrasu").addEventListener("click", function () {
+function vynulujTrasu() {
   if (startMarker) { mapa.removeLayer(startMarker); startMarker = null; }
   if (cilMarker) { mapa.removeLayer(cilMarker); cilMarker = null; }
   if (trasaVrstva) { mapa.removeLayer(trasaVrstva); trasaVrstva = null; }
   startBod = null;
   cilBod = null;
   aktualniStoupani = 0;
+  mapaHint.hidden = false;
   trasaInfo.textContent = "";
+  chipDistance.hidden = true;
+  chipElevation.hidden = true;
+  chipDuration.hidden = true;
+  chipEmpty.hidden = false;
+}
+
+// klik do mapy: 1. klik = start, 2. klik = cíl, 3. klik = znovu od startu
+mapa.on("click", function (e) {
+  if (!startBod || (startBod && cilBod)) {
+    // začínáme novou trasu
+    vynulujTrasu();
+    nastavStart(e.latlng.lat, e.latlng.lng, "z mapy");
+  } else {
+    nastavCil(e.latlng.lat, e.latlng.lng, "z mapy");
+  }
 });
+
+vymazatTrasu.addEventListener("click", vynulujTrasu);
 
 // ---------- geokódování adresy (Nominatim / OpenStreetMap, zdarma, bez klíče) ----------
 function najdiMisto(dotaz) {
@@ -150,9 +228,9 @@ najitCil.addEventListener("click", function () {
   });
 });
 
-// ---------- routování (vzdálenost, případně převýšení) ----------
+// ---------- routování (vzdálenost, doba jízdy, případně převýšení) ----------
 
-// varianta bez klíče: veřejný demo server OSRM (jen vzdálenost/čas, žádné převýšení)
+// varianta bez klíče: veřejný demo server OSRM (žádné převýšení)
 function trasaOSRM(start, cil) {
   var url = "https://router.project-osrm.org/route/v1/driving/" +
     start.lon + "," + start.lat + ";" + cil.lon + "," + cil.lat +
@@ -162,13 +240,14 @@ function trasaOSRM(start, cil) {
     var route = data.routes[0];
     return {
       vzdalenostKm: route.distance / 1000,
+      dobaS: route.duration,
       geojson: route.geometry,
       stoupaniM: null
     };
   });
 }
 
-// varianta s vlastním OpenRouteService klíčem: vzdálenost + stoupání/klesání
+// varianta s vlastním OpenRouteService klíčem: vzdálenost + doba + stoupání/klesání
 function trasaORS(start, cil, klic) {
   var url = "https://api.openrouteservice.org/v2/directions/driving-car/geojson";
   return fetch(url, {
@@ -188,6 +267,7 @@ function trasaORS(start, cil, klic) {
     var feature = data.features[0];
     return {
       vzdalenostKm: feature.properties.summary.distance / 1000,
+      dobaS: feature.properties.summary.duration,
       geojson: feature.geometry,
       stoupaniM: feature.properties.ascent || 0
     };
@@ -196,7 +276,7 @@ function trasaORS(start, cil, klic) {
 
 function vykresliTrasu(geojson) {
   if (trasaVrstva) { mapa.removeLayer(trasaVrstva); }
-  trasaVrstva = L.geoJSON(geojson, { style: { color: "#325573", weight: 5 } }).addTo(mapa);
+  trasaVrstva = L.geoJSON(geojson, { style: { color: "#C2603C", weight: 5 } }).addTo(mapa);
   mapa.fitBounds(trasaVrstva.getBounds(), { padding: [20, 20] });
 }
 
@@ -214,14 +294,26 @@ vypocitatTrasu.addEventListener("click", function () {
     vykresliTrasu(vysledek.geojson);
     vzdalenost.value = vysledek.vzdalenostKm.toFixed(1);
 
+    chipEmpty.hidden = true;
+    chipDistance.hidden = false;
+    chipDistanceVal.textContent = Math.round(vysledek.vzdalenostKm) + " km";
+
+    if (vysledek.dobaS) {
+      chipDuration.hidden = false;
+      chipDurationVal.textContent = formatujCas(vysledek.dobaS);
+    } else {
+      chipDuration.hidden = true;
+    }
+
     if (vysledek.stoupaniM !== null) {
       aktualniStoupani = vysledek.stoupaniM;
-      trasaInfo.textContent = "Vzdálenost: " + vysledek.vzdalenostKm.toFixed(1) +
-        " km, stoupání: " + Math.round(vysledek.stoupaniM) + " m.";
+      chipElevation.hidden = false;
+      chipElevationVal.textContent = "stoupání " + Math.round(vysledek.stoupaniM) + " m";
+      trasaInfo.textContent = "";
     } else {
       aktualniStoupani = 0;
-      trasaInfo.textContent = "Vzdálenost: " + vysledek.vzdalenostKm.toFixed(1) +
-        " km. (Pro zohlednění převýšení vyplň v Upřesnění vlastní OpenRouteService klíč.)";
+      chipElevation.hidden = true;
+      trasaInfo.textContent = "Pro zohlednění převýšení vyplň v Upřesnění vlastní OpenRouteService klíč.";
     }
   }).catch(function (err) {
     trasaInfo.textContent = err.message;

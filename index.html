@@ -4,8 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Spotřeba benzínu</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:opsz,wght@9..40,400..700&display=swap">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css?family=Bangers" rel="stylesheet">
 
     <!-- Leaflet - mapa (OpenStreetMap dlaždice), zdarma, bez API klíče -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -13,105 +14,228 @@
   </head>
   <body>
 
-    <nav>
-      <ul>
-        <li>Spotřeba benzínu</li><br>
-        <li>Spotřeba energie</li><br>
-        <li>Další...</li>
-      </ul>
-    </nav>
+    <div class="page">
 
-    <kalkulacka>
-      <h1>Spotřeba benzínu</h1>
-
-      <trasa>
-        <p id="popis">Start</p>
-        <div class="hledani">
-          <input id="startAdresa" type="text" name="startAdresa" placeholder="adresa nebo místo (např. Praha)">
-          <button id="najitStart" type="button" class="malyBtn">Najít</button>
+      <!-- NAV -->
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FDF8EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h12"></path><path d="M4 9h10"></path><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"></path><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"></path></svg>
+          </span>
+          <span class="brand-name">Spotřeba benzínu</span>
         </div>
+        <nav class="pillnav">
+          <a href="#" class="pill pill-active">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"></path><circle cx="6.5" cy="16.5" r="2.5"></circle><circle cx="16.5" cy="16.5" r="2.5"></circle></svg>
+            Benzín
+          </a>
+          <a href="#" class="pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+            Energie
+          </a>
+          <a href="#" class="pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+            Další...
+          </a>
+        </nav>
+      </header>
 
-        <p id="popis">Cíl</p>
-        <div class="hledani">
-          <input id="cilAdresa" type="text" name="cilAdresa" placeholder="adresa nebo místo (např. Brno)">
-          <button id="najitCil" type="button" class="malyBtn">Najít</button>
-        </div>
+      <main class="content">
 
-        <p id="napoveda">Nebo klikni do mapy: 1. klik = start, 2. klik = cíl.</p>
+        <!-- HERO -->
+        <section class="hero">
+          <div class="hero-text">
+            <div class="eyebrow">Kalkulačka cesty autem</div>
+            <h1>Kolik tě bude stát ten výlet?</h1>
+          </div>
+          <p class="hero-sub">Vyber trasu na mapě, doplň spotřebu a cenu paliva. Rozpočítáme to i na jednoho člověka v autě.</p>
+        </section>
 
-        <div id="mapa"></div>
-        <p id="atribuce">Data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · trasa: OSRM/OpenRouteService</p>
+        <!-- CARD -->
+        <section class="card">
 
-        <div class="tlacitkaTrasy">
-          <button id="vypocitatTrasu" type="button" name="button">Spočítat trasu</button>
-          <button id="vymazatTrasu" type="button" name="button" class="sekundarni">Vymazat trasu</button>
-        </div>
+          <div class="section-head">
+            <span class="step">1</span>
+            <span class="step-title">Trasa</span>
+            <span class="rule"></span>
+          </div>
 
-        <p id="trasaInfo"></p>
+          <div class="fields-row">
+            <label class="field">
+              <span class="field-label">Start</span>
+              <span class="field-box">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.2" stroke-linecap="round" class="field-icon"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+                <input id="startAdresa" type="text" name="startAdresa" placeholder="adresa nebo místo (např. Praha)">
+                <button id="najitStart" type="button" class="find-btn">Najít</button>
+              </span>
+            </label>
+            <label class="field">
+              <span class="field-label">Cíl</span>
+              <span class="field-box">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--terra-strong)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="field-icon"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <input id="cilAdresa" type="text" name="cilAdresa" placeholder="adresa nebo místo (např. Brno)">
+                <button id="najitCil" type="button" class="find-btn">Najít</button>
+              </span>
+            </label>
+          </div>
 
-        <details id="upresneni">
-          <summary>Upřesnění (převýšení, provoz)</summary>
+          <div class="hint">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11.5 4 22l10.5-5 5-10.5L9 11.5z"></path></svg>
+            <span>Nebo klikni přímo do mapy — první klik nastaví start, druhý cíl.</span>
+          </div>
 
-          <p id="popis">Provoz</p>
-          <select id="provoz" name="provoz">
-            <option value="1">Plynulý provoz</option>
-            <option value="1.1">Běžný provoz</option>
-            <option value="1.25">Kolony / husté město</option>
-          </select>
+          <div class="map-wrap">
+            <div id="mapa"></div>
+            <div id="mapaHint" class="map-hint">
+              <span>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--terra-strong)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>
+                Klikni do mapy a vyber start
+              </span>
+            </div>
+          </div>
+          <p id="trasaInfo" class="trasa-info"></p>
 
-          <p id="popis">OpenRouteService API klíč (nepovinné)</p>
-          <input id="orsKlic" type="text" name="orsKlic" placeholder="vlož vlastní zdarma klíč">
-          <p id="napoveda">Bez klíče se spočítá jen vzdálenost (OSRM). S vlastním zdarma klíčem z
-            <a href="https://openrouteservice.org/dev/#/signup" target="_blank" rel="noopener">openrouteservice.org</a>
-            se navíc zohlední převýšení trasy. Klíč se ukládá jen v tomto prohlížeči (localStorage).</p>
+          <div class="route-actions">
+            <button id="vypocitatTrasu" type="button" class="btn btn-navy">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19 19 4M9 4h10v10"></path></svg>
+              Spočítat trasu
+            </button>
+            <button id="vymazatTrasu" type="button" class="btn btn-ghost">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>
+              Vymazat trasu
+            </button>
 
-          <label id="checkboxLabel">
-            <input id="zohlednitPrevyseni" type="checkbox" checked>
-            Zohlednit převýšení (pokud je klíč vyplněný)
-          </label>
+            <div class="chips" id="trasaChips">
+              <span id="chipEmpty" class="chip chip-dashed">Trasa ještě není spočítaná</span>
+              <span id="chipDistance" class="chip chip-accent" hidden>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--terra-strong)" stroke-width="2.4" stroke-linecap="round"><path d="M4 12h16M14 6l6 6-6 6"></path></svg>
+                <span id="chipDistanceVal"></span>
+              </span>
+              <span id="chipElevation" class="chip" hidden>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19l6-9 4 5 3-4 5 8z"></path></svg>
+                <span id="chipElevationVal"></span>
+              </span>
+              <span id="chipDuration" class="chip" hidden>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                <span id="chipDurationVal"></span>
+              </span>
+            </div>
+          </div>
 
-          <p id="popis">Přirážka za 100 m stoupání (l)</p>
-          <input id="prevyseniFactor" type="number" name="prevyseniFactor" value="0.15" step="0.05" min="0">
-        </details>
-      </trasa>
+          <div class="accordion">
+            <div class="accordion-head" id="accordionHead">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="chev" id="accordionChevron"><path d="M6 9l6 6 6-6"></path></svg>
+              <span class="accordion-title">Upřesnění</span>
+              <span class="badge">provoz · převýšení · API</span>
+              <span class="optional">volitelné</span>
+            </div>
+            <div class="accordion-body" id="accordionBody" hidden>
+              <label class="field">
+                <span class="field-label">Hustota provozu</span>
+                <select id="provoz" name="provoz">
+                  <option value="1.00">Plynulý provoz (×1,00)</option>
+                  <option value="1.06" selected>Běžný provoz (×1,06)</option>
+                  <option value="1.18">Kolony (×1,18)</option>
+                </select>
+              </label>
+              <label class="field">
+                <span class="field-label">Vlastní API klíč (OpenRouteService)</span>
+                <input id="orsKlic" type="text" name="orsKlic" placeholder="5b3ce…">
+                <span class="field-help">Nepovinné. Bez klíče se spočítá jen vzdálenost — klíč zdarma získáš na
+                  <a href="https://openrouteservice.org/dev/#/signup" target="_blank" rel="noopener">openrouteservice.org</a>.</span>
+              </label>
+              <div class="field field-check-col">
+                <label class="check-row" id="prevyseniCheckRow">
+                  <input id="zohlednitPrevyseni" type="checkbox" checked>
+                  <span>Zohlednit převýšení trasy</span>
+                </label>
+                <label class="field">
+                  <span class="field-label">Přirážka za 100 m stoupání</span>
+                  <span class="field-box field-box-num">
+                    <input id="prevyseniFactor" type="number" name="prevyseniFactor" value="0.15" step="0.05" min="0">
+                    <span class="unit">l</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
 
-      <p id="popis" >Vzdálenost (km)</p>
-      <input id="vzdalenost" type="number" name="vzdalenost" value="10" step="0.5" placeholder="km">
+          <div class="section-head">
+            <span class="step">2</span>
+            <span class="step-title">Auto a posádka</span>
+            <span class="rule"></span>
+          </div>
 
-      <p id="popis" >Cena (Kč / l)</p>
-      <input id="cena" type="number" name="cena" value="32.9" step="0.5" placeholder="Kč / l">
+          <div class="fields-grid">
+            <label class="field">
+              <span class="field-label">Vzdálenost</span>
+              <span class="field-box field-box-num">
+                <input id="vzdalenost" type="number" name="vzdalenost" value="10" step="0.5" placeholder="km">
+                <span class="unit">km</span>
+              </span>
+            </label>
+            <label class="field">
+              <span class="field-label">Cena paliva</span>
+              <span class="field-box field-box-num">
+                <input id="cena" type="number" name="cena" value="32.9" step="0.5" placeholder="Kč / l">
+                <span class="unit">Kč/l</span>
+              </span>
+            </label>
+            <label class="field">
+              <span class="field-label">Spotřeba</span>
+              <span class="field-box field-box-num">
+                <input id="spotreba" type="number" name="spotreba" value="8" step="0.5" placeholder="l / 100 km">
+                <span class="unit">l/100km</span>
+              </span>
+            </label>
+            <label class="field">
+              <span class="field-label">Počet osob</span>
+              <span class="field-box field-box-num">
+                <input id="osoby" type="number" name="osoby" value="1" placeholder="osoby">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 19v-2a4 4 0 0 0-3-3.87"></path></svg>
+              </span>
+            </label>
+          </div>
 
-      <p id="popis" >Spotřeba (l / 100km)</p>
-      <input id="spotreba" type="number" name="spotreba" value="8" step="0.5" placeholder="l / 100 km">
+          <button id="tlacitko" type="button" class="btn btn-cta">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="3"></rect><path d="M8 6h8M8 11h3M8 15h3M8 19h3M15 11v8"></path></svg>
+            Spočítej mi to!
+          </button>
 
-      <p id="popis" >Počet osob</p>
-      <input id="osoby" type="number" name="osoby" value="1" placeholder="osoby">
-      <br>
-      <br>
-      <button id="tlacitko" type="button" name="button">Spočítej mi to!</button>
+          <div class="result-wrap">
+            <div id="resultEmpty" class="result-empty">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="3"></rect><path d="M8 6h8M8 11h3M8 15h3"></path></svg>
+              <div>
+                <div class="result-empty-title">Tady se objeví cena</div>
+                <div class="result-empty-sub">Doplň vzdálenost, cenu paliva a spotřebu — pak klikni na Spočítej mi to!</div>
+              </div>
+            </div>
+            <div id="resultComputed" class="result-computed" hidden>
+              <div class="result-row">
+                <div class="result-stat">
+                  <div class="result-label">Celkem to vyjde na</div>
+                  <div class="result-value" id="celkem"><span id="VyraznaCenaC">XX,XX</span> Kč</div>
+                </div>
+                <div class="result-stat result-stat-secondary">
+                  <div class="result-label">Každý pak zaplatí</div>
+                  <div class="result-value result-value-sm" id="jednotlivec"><span id="VyraznaCenaJ">XX,XX</span> Kč</div>
+                </div>
+              </div>
+              <div class="result-tags" id="resultTags"></div>
+            </div>
+          </div>
 
-      <h2>Cena:</h2>
-      <h3 id="celkem">Celkem to vyjde na: <span id="VyraznaCenaC" >XX,XX</span> Kč</h3>
-      <h3 id="jednotlivec">Každý pak zaplatí: <span id="VyraznaCenaJ" >XX,XX</span> Kč</h3>
+        </section>
 
-      <p id="credit">DžyM 2018</p>
-
-    </kalkulacka>
-
-    <sider>
-      <ul>
-        <li>něco</li><br>
-        <li>něco</li>
-      </ul>
-    </sider>
+        <footer class="credit" id="credit">DžyM 2018</footer>
+      </main>
+    </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <script type="text/javascript" src="script.js">
-
-    </script>
+    <script type="text/javascript" src="script.js"></script>
 
   </body>
 </html>
