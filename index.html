@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="cs" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Spotřeba benzínu</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css?family=Bangers" rel="stylesheet">
+
+    <!-- Leaflet - mapa (OpenStreetMap dlaždice), zdarma, bez API klíče -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   </head>
   <body>
 
@@ -18,6 +23,57 @@
 
     <kalkulacka>
       <h1>Spotřeba benzínu</h1>
+
+      <trasa>
+        <p id="popis">Start</p>
+        <div class="hledani">
+          <input id="startAdresa" type="text" name="startAdresa" placeholder="adresa nebo místo (např. Praha)">
+          <button id="najitStart" type="button" class="malyBtn">Najít</button>
+        </div>
+
+        <p id="popis">Cíl</p>
+        <div class="hledani">
+          <input id="cilAdresa" type="text" name="cilAdresa" placeholder="adresa nebo místo (např. Brno)">
+          <button id="najitCil" type="button" class="malyBtn">Najít</button>
+        </div>
+
+        <p id="napoveda">Nebo klikni do mapy: 1. klik = start, 2. klik = cíl.</p>
+
+        <div id="mapa"></div>
+        <p id="atribuce">Data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · trasa: OSRM/OpenRouteService</p>
+
+        <div class="tlacitkaTrasy">
+          <button id="vypocitatTrasu" type="button" name="button">Spočítat trasu</button>
+          <button id="vymazatTrasu" type="button" name="button" class="sekundarni">Vymazat trasu</button>
+        </div>
+
+        <p id="trasaInfo"></p>
+
+        <details id="upresneni">
+          <summary>Upřesnění (převýšení, provoz)</summary>
+
+          <p id="popis">Provoz</p>
+          <select id="provoz" name="provoz">
+            <option value="1">Plynulý provoz</option>
+            <option value="1.1">Běžný provoz</option>
+            <option value="1.25">Kolony / husté město</option>
+          </select>
+
+          <p id="popis">OpenRouteService API klíč (nepovinné)</p>
+          <input id="orsKlic" type="text" name="orsKlic" placeholder="vlož vlastní zdarma klíč">
+          <p id="napoveda">Bez klíče se spočítá jen vzdálenost (OSRM). S vlastním zdarma klíčem z
+            <a href="https://openrouteservice.org/dev/#/signup" target="_blank" rel="noopener">openrouteservice.org</a>
+            se navíc zohlední převýšení trasy. Klíč se ukládá jen v tomto prohlížeči (localStorage).</p>
+
+          <label id="checkboxLabel">
+            <input id="zohlednitPrevyseni" type="checkbox" checked>
+            Zohlednit převýšení (pokud je klíč vyplněný)
+          </label>
+
+          <p id="popis">Přirážka za 100 m stoupání (l)</p>
+          <input id="prevyseniFactor" type="number" name="prevyseniFactor" value="0.15" step="0.05" min="0">
+        </details>
+      </trasa>
 
       <p id="popis" >Vzdálenost (km)</p>
       <input id="vzdalenost" type="number" name="vzdalenost" value="10" step="0.5" placeholder="km">
@@ -39,7 +95,7 @@
       <h3 id="jednotlivec">Každý pak zaplatí: <span id="VyraznaCenaJ" >XX,XX</span> Kč</h3>
 
       <p id="credit">DžyM 2018</p>
-      
+
     </kalkulacka>
 
     <sider>
@@ -48,6 +104,10 @@
         <li>něco</li>
       </ul>
     </sider>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script type="text/javascript" src="script.js">
 

@@ -89,7 +89,100 @@ button {
 
 #credit {
   font-size: 10px;
-  padding-top: 10em;
+  padding-top: 2em;
+}
+
+trasa {
+  display: block;
+  padding: 0 20px 10px 20px;
+}
+
+.hledani {
+  display: flex;
+  gap: 6px;
+  padding: 0 20px;
+  justify-content: center;
+}
+
+.hledani input {
+  flex: 1;
+  min-width: 0;
+}
+
+.malyBtn {
+  height: 30px;
+  width: auto;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+#napoveda {
+  font-size: 11px;
+  text-align: left;
+  padding: 4px 20px;
+  opacity: 0.85;
+}
+
+#mapa {
+  height: 260px;
+  width: calc(100% - 40px);
+  margin: 8px 20px;
+  border-radius: 10px;
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.5);
+  font-family: sans-serif; /* Leaflet vlastní UI nemá jet v komiksovém fontu */
+}
+
+#atribuce {
+  font-size: 10px;
+  opacity: 0.7;
+  padding: 0 20px;
+}
+
+#atribuce a {
+  color: white;
+}
+
+.tlacitkaTrasy {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 6px 20px;
+}
+
+.tlacitkaTrasy button {
+  width: auto;
+  padding: 0 12px;
+  flex: 1;
+}
+
+.sekundarni {
+  background-color: #D9896C;
+  border-color: #325573;
+}
+
+#trasaInfo {
+  font-size: 13px;
+  min-height: 1.2em;
+  padding: 0 20px;
+}
+
+#upresneni {
+  text-align: left;
+  padding: 4px 20px 10px 20px;
+  font-size: 14px;
+}
+
+#upresneni summary {
+  cursor: pointer;
+  text-align: center;
+}
+
+#checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 4px 0;
 }
 
 
