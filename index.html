@@ -4,9 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Spotřeba benzínu</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:opsz,wght@9..40,400..700&display=swap">
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
 
     <!-- Leaflet - mapa (OpenStreetMap dlaždice), zdarma, bez API klíče -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -167,24 +168,30 @@
           </div>
 
           <div class="fields-grid">
-            <label class="field">
-              <span class="field-label">Vzdálenost</span>
+            <div class="field">
+              <label class="field-label" for="vzdalenost">Vzdálenost</label>
               <span class="field-box field-box-num">
                 <input id="vzdalenost" type="number" name="vzdalenost" value="10" step="0.5" placeholder="km">
                 <span class="unit">km</span>
               </span>
-            </label>
-            <label class="field">
-              <span class="field-label">Cena paliva</span>
+              <label class="checkbox-inline">
+                <input id="tamZpet" type="checkbox">
+                Tam a zpět (×2)
+              </label>
+            </div>
+            <div class="field">
+              <label class="field-label" for="cena">Cena paliva</label>
               <span class="field-box field-box-num">
                 <input id="cena" type="number" name="cena" value="32.9" step="0.5" placeholder="Kč / l">
                 <span class="unit">Kč/l</span>
               </span>
-            </label>
+              <span class="field-help">Průměrné ceny v ČR: <a href="https://www.czso.cz/csu/czso/prumerne-ceny-pohonnych-hmot" target="_blank" rel="noopener">ČSÚ</a>
+                nebo <a href="https://www.ccs.cz/pro-verejnost/ceny-pohonnych-hmot/" target="_blank" rel="noopener">CCS</a> (denně aktualizované).</span>
+            </div>
             <label class="field">
               <span class="field-label">Spotřeba</span>
               <span class="field-box field-box-num">
-                <input id="spotreba" type="number" name="spotreba" value="8" step="0.5" placeholder="l / 100 km">
+                <input id="spotreba" type="number" name="spotreba" value="8" step="0.1" placeholder="l / 100 km">
                 <span class="unit">l/100km</span>
               </span>
             </label>
@@ -235,7 +242,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <script type="text/javascript" src="script.js?v=2"></script>
+    <script type="text/javascript" src="script.js?v=3"></script>
 
   </body>
 </html>

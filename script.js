@@ -21,6 +21,7 @@ var zohlednitPrevyseni = document.querySelector("#zohlednitPrevyseni");
 var prevyseniFactor = document.querySelector("#prevyseniFactor");
 var provoz = document.querySelector("#provoz");
 var prevyseniCheckRow = document.querySelector("#prevyseniCheckRow");
+var tamZpet = document.querySelector("#tamZpet");
 
 // chipy se stavem trasy
 var chipEmpty = document.querySelector("#chipEmpty");
@@ -80,12 +81,14 @@ function nazevProvozu(hodnota) {
 tlacitko.addEventListener("click", function () {
   var koeficientProvozu = Number(provoz.value) || 1;
   var efektivniSpotreba = Number(spotreba.value) * koeficientProvozu;
+  var koeficientSmeru = tamZpet.checked ? 2 : 1;
+  var efektivniVzdalenost = Number(vzdalenost.value) * koeficientSmeru;
 
-  var litryZaTrasu = (Number(vzdalenost.value) * efektivniSpotreba) / 100;
+  var litryZaTrasu = (efektivniVzdalenost * efektivniSpotreba) / 100;
 
   var litryZaPrevyseni = 0;
   if (zohlednitPrevyseni.checked && aktualniStoupani > 0) {
-    litryZaPrevyseni = (aktualniStoupani / 100) * Number(prevyseniFactor.value || 0);
+    litryZaPrevyseni = (aktualniStoupani / 100) * Number(prevyseniFactor.value || 0) * koeficientSmeru;
   }
 
   var celkoveLitry = litryZaTrasu + litryZaPrevyseni;
@@ -98,7 +101,7 @@ tlacitko.addEventListener("click", function () {
   // tagy shrnující vstupy pod výslednou cenou
   resultTags.innerHTML = "";
   var tagy = [
-    Number(vzdalenost.value).toLocaleString("cs-CZ") + " km",
+    efektivniVzdalenost.toLocaleString("cs-CZ") + " km" + (tamZpet.checked ? " (tam a zpět)" : ""),
     Number(spotreba.value).toLocaleString("cs-CZ") + " l/100 km" +
       (litryZaPrevyseni > 0 ? " (+ převýšení)" : ""),
     Number(cena.value).toLocaleString("cs-CZ") + " Kč/l",
