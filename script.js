@@ -114,8 +114,9 @@ function prepocitej() {
   var vypocetSkupina = (celkoveLitry * Number(cena.value)).toFixed(2);
   var vypocetJednotlivec = (vypocetSkupina / Number(osoby.value)).toFixed(2);
 
-  celkem.textContent = vypocetSkupina.replace(".", ",");
-  jednotlivec.textContent = vypocetJednotlivec.replace(".", ",");
+  // stejné formátování jako v tiskové sestavě (včetně oddělovače tisíců)
+  celkem.textContent = cislo(Number(vypocetSkupina), 2);
+  jednotlivec.textContent = cislo(Number(vypocetJednotlivec), 2);
 
   // tagy shrnující vstupy pod výslednou cenou
   resultTags.innerHTML = "";
@@ -201,9 +202,9 @@ function pridejRadek(seznam, popis, hodnota) {
 // Dlaždice OSM posílají Access-Control-Allow-Origin, takže canvas zůstane
 // "čistý" a jde z něj vytáhnout obrázek přes toDataURL().
 var DLAZDICE = 256;
-var MAPA_SIRKA = 1000;
-var MAPA_VYSKA = 560;
-var MAPA_OKRAJ = 70; // rezerva, ať trasa nekončí přesně na hraně
+var MAPA_SIRKA = 760;
+var MAPA_VYSKA = 340;
+var MAPA_OKRAJ = 55; // rezerva, ať trasa nekončí přesně na hraně
 
 function lonNaX(lon, zoom) {
   return (lon + 180) / 360 * Math.pow(2, zoom);
@@ -325,7 +326,7 @@ function vytvorObrazekTrasy() {
       var misto = naPlatno(bod.lon, bod.lat);
       var posledni = index === body.length - 1;
       ctx.beginPath();
-      ctx.arc(misto.x, misto.y, 13, 0, Math.PI * 2);
+      ctx.arc(misto.x, misto.y, 11, 0, Math.PI * 2);
       ctx.fillStyle = posledni ? "#C2603C" : "#325573";
       ctx.fill();
       ctx.strokeStyle = "#FFFFFF";
@@ -333,7 +334,7 @@ function vytvorObrazekTrasy() {
       ctx.stroke();
 
       ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 15px sans-serif";
+      ctx.font = "bold 13px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String(index + 1), misto.x, misto.y + 1);
