@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:opsz,wght@9..40,400..700&display=swap">
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=8">
 
     <!-- Leaflet - mapa (OpenStreetMap dlaždice), zdarma, bez API klíče -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -32,7 +32,7 @@
               Benzín
             </span>
           </span>
-          <span class="verze">verze 2.2</span>
+          <span class="verze">verze 2.4</span>
         </div>
       </header>
 
@@ -49,6 +49,9 @@
 
         <!-- CARD -->
         <section class="card">
+         <div class="card-grid">
+          <!-- levý sloupec: trasa a mapa -->
+          <div class="card-col card-col-trasa">
 
           <div class="section-head">
             <span class="step">1</span>
@@ -146,6 +149,11 @@
             </div>
           </div>
 
+          </div><!-- /card-col-trasa -->
+
+          <!-- pravý sloupec: výpočet -->
+          <div class="card-col card-col-vypocet">
+
           <div class="section-head">
             <span class="step">2</span>
             <span class="step-title">Auto a posádka</span>
@@ -215,19 +223,75 @@
               </div>
               <div class="result-tags" id="resultTags"></div>
             </div>
+
+            <div class="vyuctovani">
+              <div class="vyuctovani-nadpis">Podklad k vyúčtování <span>nepovinné</span></div>
+              <div class="vyuctovani-pole">
+                <label class="field">
+                  <span class="field-label">Datum cesty</span>
+                  <span class="field-box">
+                    <input id="datumCesty" type="date" name="datumCesty">
+                  </span>
+                </label>
+                <label class="field">
+                  <span class="field-label">Účel / popis cesty</span>
+                  <span class="field-box">
+                    <input id="popisCesty" type="text" name="popisCesty" placeholder="např. montáž u zákazníka v Plzni">
+                  </span>
+                </label>
+              </div>
+
+              <div class="result-akce">
+                <button id="tiskBtn" type="button" class="btn btn-ghost">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 14h12v8H6z"></path></svg>
+                  Tisk / uložit do PDF
+                </button>
+                <span class="result-akce-popis" id="tiskPopis">Vyúčtování cesty jako podklad k cestovním výdajům.</span>
+              </div>
+            </div>
           </div>
 
+          </div><!-- /card-col-vypocet -->
+         </div><!-- /card-grid -->
         </section>
 
         <footer class="credit" id="credit">DžyM 2018</footer>
       </main>
     </div>
 
+    <!-- Tisková sestava - na obrazovce skrytá, vykreslí se jen při tisku / uložení do PDF -->
+    <div class="tisk" id="tisk" aria-hidden="true">
+      <div class="tisk-hlavicka">
+        <h1>Vyúčtování cesty autem</h1>
+        <div class="tisk-datum" id="tiskDatum"></div>
+      </div>
+
+      <dl class="tisk-radky tisk-udaje" id="tiskUdaje"></dl>
+
+      <h2>Trasa</h2>
+      <ol class="tisk-body" id="tiskBody"></ol>
+      <figure class="tisk-mapa" id="tiskMapaObal" hidden>
+        <img id="tiskMapa" alt="Mapa trasy">
+      </figure>
+      <dl class="tisk-radky" id="tiskTrasa"></dl>
+
+      <h2>Výpočet</h2>
+      <dl class="tisk-radky" id="tiskVypocet"></dl>
+
+      <div class="tisk-soucet" id="tiskSoucet"></div>
+
+      <p class="tisk-poznamka">
+        Orientační odhad vytvořený kalkulačkou Spotřeba benzínu (<span id="tiskVerze"></span>).
+        Vzdálenost, doba jízdy a převýšení pocházejí z OpenStreetMap / OSRM / OpenRouteService;
+        vliv provozu je odhad koeficientem, ne měření v reálném čase.
+      </p>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <script type="text/javascript" src="script.js?v=6"></script>
+    <script type="text/javascript" src="script.js?v=8"></script>
 
   </body>
 </html>
