@@ -977,7 +977,9 @@ a:hover { color: var(--navy); }
   .tisk {
     display: block;
     max-width: 100%;
-    padding: 0;
+    /* Okraje řešíme paddingem, ne @page marginem: volba "Okraje: žádné"
+       v tiskovém dialogu totiž @page margin přebije a obsah se ořízne. */
+    padding: 12mm 10mm;
     font-family: 'DM Sans', system-ui, sans-serif;
     font-size: 10pt;
     line-height: 1.35;
@@ -1084,6 +1086,7 @@ a:hover { color: var(--navy); }
     color: #444;
   }
 
-  /* vyúčtování je jednostránkový doklad na výšku */
-  @page { size: A4 portrait; margin: 14mm; }
+  /* vyúčtování je jednostránkový doklad na výšku;
+     margin: 0 + padding výše dá stejný výsledek při jakémkoli nastavení dialogu */
+  @page { size: A4 portrait; margin: 0; }
 }

@@ -683,7 +683,11 @@ function najdiProBod(index) {
   if (!bod.dotaz.trim()) { return; }
   trasaInfo.textContent = "Hledám " + roleBodu(index).toLowerCase() + "...";
   najdiMisto(bod.dotaz).then(function (misto) {
-    nastavBod(index, misto.lat, misto.lon, misto.nazev);
+    // Než hledání doběhne, mohl se počet bodů změnit (klik do mapy, přidání
+    // zastávky) a index by ukazoval na jiný bod - držíme se proto objektu.
+    var aktualniIndex = body.indexOf(bod);
+    if (aktualniIndex === -1) { return; }
+    nastavBod(aktualniIndex, misto.lat, misto.lon, misto.nazev);
     if (mapaDostupna) { mapa.setView([misto.lat, misto.lon], 12); }
     trasaInfo.textContent = "";
   }).catch(function (err) {
