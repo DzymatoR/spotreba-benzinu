@@ -295,6 +295,19 @@ a:hover { color: var(--navy); }
 
 .trasa-odebrat:hover { background: var(--cream-soft); color: var(--terra-strong); }
 
+/* nabídka vložení zastávky uvnitř seznamu, na místě, kam bod přibude */
+.trasa-vlozit {
+  display: flex;
+  margin: -2px 0;
+}
+
+.trasa-vlozit .btn-link {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.trasa-vlozit .btn-link:hover { color: var(--terra-strong); }
+
 .trasa-akce {
   padding: 10px 22px 0;
   display: flex;
