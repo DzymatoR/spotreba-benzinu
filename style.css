@@ -202,6 +202,15 @@ a:hover { color: var(--navy); }
   padding-bottom: 24px;
 }
 
+/* na úzkých displejích je karta jeden sloupec, na širokých se trasa
+   a výpočet rozdělí vedle sebe (viz media query na konci souboru) */
+.card-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.card-col { min-width: 0; }
+
 .section-head {
   padding: 22px 22px 6px;
   display: flex;
@@ -851,6 +860,48 @@ a:hover { color: var(--navy); }
   max-width: 920px;
 }
 
+/* ---------- podklad k vyúčtování ---------- */
+.vyuctovani {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.vyuctovani-nadpis {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.vyuctovani-nadpis span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.vyuctovani-pole {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vyuctovani-pole .field-box { height: 46px; padding: 0 14px; }
+
+.vyuctovani-pole input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
 /* ---------- akce pod výsledkem ---------- */
 .result-akce {
   display: flex;
@@ -868,6 +919,29 @@ a:hover { color: var(--navy); }
 /* ---------- tisková sestava ---------- */
 /* na obrazovce se nezobrazuje, vykreslí se až při tisku / uložení do PDF */
 .tisk { display: none; }
+
+/* ---------- široké displeje: trasa a výpočet vedle sebe ---------- */
+@media screen and (min-width: 1080px) {
+  .hero, .card { max-width: 1240px; }
+
+  /* bez align-items se sloupce roztáhnou na stejnou výšku,
+     takže svislý předěl jde přes celou kartu */
+  .card-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+
+  /* svislý předěl mezi sloupci; roztažený přes celou výšku karty */
+  .card-col-vypocet {
+    border-left: 1px solid var(--line);
+  }
+
+  /* v užším sloupci by se cena při 9vw nevešla */
+  .result-value { font-size: clamp(40px, 4.2vw, 60px); }
+  .result-value-sm { font-size: clamp(30px, 3vw, 44px); }
+
+  /* mapa může být v samostatném sloupci vyšší */
+  #mapa { height: clamp(300px, 42vh, 420px); }
+}
 
 /* ---------- responsive ---------- */
 @media screen and (max-width: 640px) {
@@ -938,6 +1012,23 @@ a:hover { color: var(--navy); }
   }
 
   .tisk-body li { margin-bottom: 2pt; }
+
+  .tisk-mapa {
+    margin: 8pt 0 10pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .tisk-mapa img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid #000;
+  }
+
+  .tisk-mapa[hidden] { display: none; }
+
+  .tisk-udaje { margin-bottom: 10pt; }
 
   .tisk-radky {
     display: grid;

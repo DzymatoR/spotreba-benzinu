@@ -44,6 +44,8 @@ var accordionChevron = document.querySelector("#accordionChevron");
 var aktualniStoupani = 0;
 // doba jízdy spočítané trasy v sekundách (0 = trasa zatím nespočítaná)
 var aktualniDobaS = 0;
+// geometrie spočítané trasy - používá se i pro obrázek do tiskové sestavy
+var aktualniGeojson = null;
 
 // ---------- stav trasy ----------
 // Body trasy v pořadí: první = start, poslední = cíl, mezi nimi zastávky.
@@ -158,11 +160,25 @@ tlacitko.addEventListener("click", prepocitej);
 
 // ---------- tisková sestava (podklad k cestovním výdajům) ----------
 var tiskBtn = document.querySelector("#tiskBtn");
+var tiskPopis = document.querySelector("#tiskPopis");
 var tiskDatum = document.querySelector("#tiskDatum");
+var tiskUdaje = document.querySelector("#tiskUdaje");
 var tiskBodyEl = document.querySelector("#tiskBody");
 var tiskTrasa = document.querySelector("#tiskTrasa");
 var tiskVypocet = document.querySelector("#tiskVypocet");
 var tiskSoucet = document.querySelector("#tiskSoucet");
+var tiskMapa = document.querySelector("#tiskMapa");
+var tiskMapaObal = document.querySelector("#tiskMapaObal");
+var datumCesty = document.querySelector("#datumCesty");
+var popisCesty = document.querySelector("#popisCesty");
+
+// datum cesty předvyplníme na dnešek, ať ho nemusí vyplňovat každý ručně
+(function () {
+  var dnes = new Date();
+  var mesic = String(dnes.getMonth() + 1).padStart(2, "0");
+  var den = String(dnes.getDate()).padStart(2, "0");
+  datumCesty.value = dnes.getFullYear() + "-" + mesic + "-" + den;
+})();
 
 function cislo(hodnota, desetinnych) {
   return hodnota.toLocaleString("cs-CZ", {
@@ -180,12 +196,200 @@ function pridejRadek(seznam, popis, hodnota) {
   seznam.appendChild(dd);
 }
 
+// ---------- statická mapa trasy do tiskové sestavy ----------
+// Skládá se z OSM dlaždic na canvas a kreslí se do ní skutečná geometrie trasy.
+// Dlaždice OSM posílají Access-Control-Allow-Origin, takže canvas zůstane
+// "čistý" a jde z něj vytáhnout obrázek přes toDataURL().
+var DLAZDICE = 256;
+var MAPA_SIRKA = 1000;
+var MAPA_VYSKA = 560;
+var MAPA_OKRAJ = 70; // rezerva, ať trasa nekončí přesně na hraně
+
+function lonNaX(lon, zoom) {
+  return (lon + 180) / 360 * Math.pow(2, zoom);
+}
+
+function latNaY(lat, zoom) {
+  var rad = lat * Math.PI / 180;
+  return (1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2 * Math.pow(2, zoom);
+}
+
+// geometrie trasy jako plochý seznam [lon, lat] (ORS vrací i nadmořskou výšku navíc)
+function souradniceTrasy() {
+  if (!aktualniGeojson) { return []; }
+  var souradnice = aktualniGeojson.coordinates || [];
+  if (aktualniGeojson.type === "MultiLineString") {
+    return souradnice.reduce(function (vse, cast) { return vse.concat(cast); }, []);
+  }
+  return souradnice;
+}
+
+function obalTrasy(cesta) {
+  var obal = { minLon: 180, maxLon: -180, minLat: 90, maxLat: -90 };
+  cesta.forEach(function (bod) {
+    obal.minLon = Math.min(obal.minLon, bod[0]);
+    obal.maxLon = Math.max(obal.maxLon, bod[0]);
+    obal.minLat = Math.min(obal.minLat, bod[1]);
+    obal.maxLat = Math.max(obal.maxLat, bod[1]);
+  });
+  return obal;
+}
+
+// největší zoom, při kterém se celá trasa ještě vejde do obrázku
+function vyberZoom(obal) {
+  for (var zoom = 17; zoom >= 1; zoom--) {
+    var sirka = (lonNaX(obal.maxLon, zoom) - lonNaX(obal.minLon, zoom)) * DLAZDICE;
+    var vyska = (latNaY(obal.minLat, zoom) - latNaY(obal.maxLat, zoom)) * DLAZDICE;
+    if (sirka <= MAPA_SIRKA - MAPA_OKRAJ && vyska <= MAPA_VYSKA - MAPA_OKRAJ) { return zoom; }
+  }
+  return 1;
+}
+
+function nactiDlazdici(x, y, zoom) {
+  return new Promise(function (resolve) {
+    var obrazek = new Image();
+    obrazek.crossOrigin = "anonymous";
+    var hotovo = false;
+    var dokonci = function (uspech) {
+      if (hotovo) { return; }
+      hotovo = true;
+      resolve(uspech ? obrazek : null);
+    };
+    obrazek.onload = function () { dokonci(true); };
+    obrazek.onerror = function () { dokonci(false); };
+    setTimeout(function () { dokonci(false); }, 8000);
+    obrazek.src = "https://tile.openstreetmap.org/" + zoom + "/" + x + "/" + y + ".png";
+  });
+}
+
+function vytvorObrazekTrasy() {
+  var cesta = souradniceTrasy();
+  if (!cesta.length) { return Promise.resolve(null); }
+
+  var obal = obalTrasy(cesta);
+  var zoom = vyberZoom(obal);
+  var stredX = (lonNaX(obal.minLon, zoom) + lonNaX(obal.maxLon, zoom)) / 2 * DLAZDICE;
+  var stredY = (latNaY(obal.minLat, zoom) + latNaY(obal.maxLat, zoom)) / 2 * DLAZDICE;
+  var pocatekX = stredX - MAPA_SIRKA / 2;
+  var pocatekY = stredY - MAPA_VYSKA / 2;
+
+  var platno = document.createElement("canvas");
+  platno.width = MAPA_SIRKA;
+  platno.height = MAPA_VYSKA;
+  var ctx = platno.getContext("2d");
+  ctx.fillStyle = "#EFE7D6";
+  ctx.fillRect(0, 0, MAPA_SIRKA, MAPA_VYSKA);
+
+  function naPlatno(lon, lat) {
+    return {
+      x: lonNaX(lon, zoom) * DLAZDICE - pocatekX,
+      y: latNaY(lat, zoom) * DLAZDICE - pocatekY
+    };
+  }
+
+  // seznam dlaždic, které obrázek pokrývají
+  var pocetDlazdic = Math.pow(2, zoom);
+  var ukoly = [];
+  for (var dx = Math.floor(pocatekX / DLAZDICE); dx <= Math.floor((pocatekX + MAPA_SIRKA) / DLAZDICE); dx++) {
+    for (var dy = Math.floor(pocatekY / DLAZDICE); dy <= Math.floor((pocatekY + MAPA_VYSKA) / DLAZDICE); dy++) {
+      if (dy < 0 || dy >= pocetDlazdic) { continue; }
+      var dlazdiceX = ((dx % pocetDlazdic) + pocetDlazdic) % pocetDlazdic;
+      ukoly.push({ x: dlazdiceX, y: dy, kamX: dx * DLAZDICE - pocatekX, kamY: dy * DLAZDICE - pocatekY });
+    }
+  }
+
+  return Promise.all(ukoly.map(function (ukol) {
+    return nactiDlazdici(ukol.x, ukol.y, zoom).then(function (obrazek) {
+      // dlaždice, která se nenačte, se prostě nevykreslí (zůstane podklad)
+      if (obrazek) { ctx.drawImage(obrazek, ukol.kamX, ukol.kamY, DLAZDICE, DLAZDICE); }
+    });
+  })).then(function () {
+    // čára trasy - bílé podbarvení a přes něj barva trasy
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    [{ barva: "#FFFFFF", sirka: 9 }, { barva: "#C2603C", sirka: 5 }].forEach(function (vrstva) {
+      ctx.beginPath();
+      cesta.forEach(function (bod, index) {
+        var mistoNaPlatne = naPlatno(bod[0], bod[1]);
+        if (index === 0) { ctx.moveTo(mistoNaPlatne.x, mistoNaPlatne.y); }
+        else { ctx.lineTo(mistoNaPlatne.x, mistoNaPlatne.y); }
+      });
+      ctx.strokeStyle = vrstva.barva;
+      ctx.lineWidth = vrstva.sirka;
+      ctx.stroke();
+    });
+
+    // číslované body trasy, čísla odpovídají seznamu v sestavě
+    body.forEach(function (bod, index) {
+      if (!maSouradnice(bod)) { return; }
+      var misto = naPlatno(bod.lon, bod.lat);
+      var posledni = index === body.length - 1;
+      ctx.beginPath();
+      ctx.arc(misto.x, misto.y, 13, 0, Math.PI * 2);
+      ctx.fillStyle = posledni ? "#C2603C" : "#325573";
+      ctx.fill();
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 15px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(index + 1), misto.x, misto.y + 1);
+    });
+
+    // povinná atribuce OpenStreetMap
+    var popisek = "© OpenStreetMap contributors";
+    ctx.font = "13px sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    var sirkaPopisku = ctx.measureText(popisek).width;
+    ctx.fillStyle = "rgba(255, 255, 255, .8)";
+    ctx.fillRect(MAPA_SIRKA - sirkaPopisku - 14, MAPA_VYSKA - 24, sirkaPopisku + 12, 20);
+    ctx.fillStyle = "#333333";
+    ctx.fillText(popisek, MAPA_SIRKA - 8, MAPA_VYSKA - 7);
+
+    try {
+      return platno.toDataURL("image/png");
+    } catch (chyba) {
+      // kdyby některá dlaždice přišla bez CORS hlaviček, canvas by byl "znečištěný"
+      console.error("Obrázek mapy se nepodařilo vytvořit:", chyba);
+      return null;
+    }
+  });
+}
+
+function nastavObrazekDoSestavy(dataUrl) {
+  return new Promise(function (resolve) {
+    if (!dataUrl) {
+      tiskMapaObal.hidden = true;
+      resolve();
+      return;
+    }
+    tiskMapa.onload = function () { resolve(); };
+    tiskMapa.onerror = function () { tiskMapaObal.hidden = true; resolve(); };
+    tiskMapa.src = dataUrl;
+    tiskMapaObal.hidden = false;
+  });
+}
+
 function naplnTiskovouSestavu(souhrn) {
   tiskDatum.textContent = "Vystaveno " + new Date().toLocaleDateString("cs-CZ");
 
   // verzi bereme z horní lišty, ať není číslo v HTML na dvou místech
   var verzeEl = document.querySelector(".verze");
   document.querySelector("#tiskVerze").textContent = verzeEl ? verzeEl.textContent : "";
+
+  // datum a účel cesty - obojí nepovinné, prázdné se do sestavy nedává
+  tiskUdaje.innerHTML = "";
+  if (datumCesty.value) {
+    var den = new Date(datumCesty.value + "T00:00:00");
+    pridejRadek(tiskUdaje, "Datum cesty", isNaN(den) ? datumCesty.value : den.toLocaleDateString("cs-CZ"));
+  }
+  if (popisCesty.value.trim()) {
+    pridejRadek(tiskUdaje, "Účel cesty", popisCesty.value.trim());
+  }
 
   // body trasy
   tiskBodyEl.innerHTML = "";
@@ -242,8 +446,25 @@ function naplnTiskovouSestavu(souhrn) {
 
 tiskBtn.addEventListener("click", function () {
   // přepočítáme, ať sestava odpovídá aktuálně zadaným hodnotám
-  naplnTiskovouSestavu(prepocitej());
-  window.print();
+  var souhrn = prepocitej();
+  naplnTiskovouSestavu(souhrn);
+
+  // obrázek mapy se skládá z dlaždic, takže tisk musí počkat, než bude hotový
+  var puvodniPopis = tiskPopis.textContent;
+  tiskBtn.disabled = true;
+  if (souradniceTrasy().length) { tiskPopis.textContent = "Připravuji mapu do sestavy..."; }
+
+  vytvorObrazekTrasy()
+    .catch(function (chyba) {
+      console.error("Obrázek mapy se nepodařilo připravit:", chyba);
+      return null;
+    })
+    .then(nastavObrazekDoSestavy)
+    .then(function () {
+      tiskBtn.disabled = false;
+      tiskPopis.textContent = puvodniPopis;
+      window.print();
+    });
 });
 
 // ---------- vykreslení seznamu bodů trasy ----------
@@ -403,6 +624,7 @@ function zneplatniTrasu() {
   trasaVrstva = null;
   aktualniStoupani = 0;
   aktualniDobaS = 0;
+  aktualniGeojson = null;
   chipDistance.hidden = true;
   chipElevation.hidden = true;
   chipDuration.hidden = true;
@@ -536,6 +758,7 @@ vypocitatTrasu.addEventListener("click", function () {
   var slib = klic ? trasaORS(body, klic) : trasaOSRM(body);
 
   slib.then(function (vysledek) {
+    aktualniGeojson = vysledek.geojson;
     vykresliTrasuNaMape(vysledek.geojson);
     vzdalenost.value = vysledek.vzdalenostKm.toFixed(1);
 

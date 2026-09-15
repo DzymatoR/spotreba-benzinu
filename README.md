@@ -6,6 +6,8 @@ https://electronjs.org/docs/tutorial/first-app
 
 ## Mapa a trasa
 
+Na širokých displejích je trasa a výpočet vedle sebe, na užších pod sebou.
+
 Kalkulačka umí vybrat start a cíl na mapě (nebo vyhledáním adresy) a
 automaticky z toho spočítat vzdálenost, kterou pak použije ve výpočtu
 spotřeby. Funguje kdekoliv v Evropě (i mimo ni).
@@ -35,11 +37,16 @@ Použité služby - všechny mají zdarma dostupnou variantu:
   lokálně v prohlížeči (localStorage), nikam se neodesílá jinam.
 - **Export do PDF:** tlačítko "Tisk / uložit do PDF" pod výsledkem
   vykreslí samostatnou tiskovou sestavu (vyúčtování cesty jako podklad
-  k cestovním výdajům) a otevře tiskový dialog prohlížeče, kde se dá
-  zvolit "Uložit jako PDF". Záměrně bez knihovny typu jsPDF - tisk
-  přes prohlížeč dává ostrý vektorový text, funguje offline a nemá
-  problém s českou diakritikou (jsPDF by potřeboval embedovat vlastní
-  TTF font).
+  k cestovním výdajům, včetně nepovinného data a účelu cesty) a otevře
+  tiskový dialog prohlížeče, kde se dá zvolit "Uložit jako PDF".
+  Záměrně bez knihovny typu jsPDF - tisk přes prohlížeč dává ostrý
+  vektorový text, funguje offline a nemá problém s českou diakritikou
+  (jsPDF by potřeboval embedovat vlastní TTF font).
+- **Obrázek trasy v sestavě:** skládá se z OSM dlaždic na `<canvas>`,
+  do kterého se dokreslí geometrie trasy a číslované body (čísla
+  odpovídají seznamu bodů nad mapou). Dlaždice OSM posílají CORS
+  hlavičky, takže z canvasu jde vytáhnout obrázek přes `toDataURL()`.
+  Když se dlaždice nenačtou, vykreslí se aspoň trasa na podkladu.
 - **Provoz (kolony):** živá data o dopravě zdarma reálně neexistují
   (Google/TomTom/HERE mají jen placené nebo silně omezené API). Místo
   toho je v sekci "Upřesnění" jednoduchý přepínač Plynulý / Běžný /
