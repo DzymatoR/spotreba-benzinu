@@ -9,7 +9,6 @@ var celkem = document.querySelector("#VyraznaCenaC");
 
 // ---------- prvky trasy / mapy ----------
 var trasaBodyEl = document.querySelector("#trasaBody");
-var pridatZastavku = document.querySelector("#pridatZastavku");
 var okruhBtn = document.querySelector("#okruhBtn");
 var vypocitatTrasu = document.querySelector("#vypocitatTrasu");
 var vymazatTrasu = document.querySelector("#vymazatTrasu");
@@ -155,6 +154,26 @@ function ikonaBodu(index) {
   return IKONA_ZASTAVKA;
 }
 
+function vytvorVlozitZastavku() {
+  var obal = document.createElement("div");
+  obal.className = "trasa-vlozit";
+
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn-link";
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>';
+  btn.appendChild(document.createTextNode("Přidat zastávku"));
+  btn.addEventListener("click", function () {
+    body.splice(body.length - 1, 0, novyBod());
+    zneplatniTrasu();
+    vykresliBody();
+  });
+
+  obal.appendChild(btn);
+  return obal;
+}
+
 function vykresliBody() {
   trasaBodyEl.innerHTML = "";
 
@@ -223,6 +242,11 @@ function vykresliBody() {
 
     radek.appendChild(obal);
     trasaBodyEl.appendChild(radek);
+
+    // nabídka vložení zastávky přesně tam, kam nový bod přibude (těsně před cíl)
+    if (index === body.length - 2) {
+      trasaBodyEl.appendChild(vytvorVlozitZastavku());
+    }
   });
 
   aktualizujMarkery();
@@ -285,13 +309,6 @@ function vynulujTrasu() {
   trasaInfo.textContent = "";
   vykresliBody();
 }
-
-pridatZastavku.addEventListener("click", function () {
-  // nová zastávka se vkládá před cíl
-  body.splice(body.length - 1, 0, novyBod());
-  zneplatniTrasu();
-  vykresliBody();
-});
 
 okruhBtn.addEventListener("click", function () {
   var start = body[0];
