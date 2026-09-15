@@ -1,5 +1,7 @@
 # Spotřeba benzínu
 
+### 👉 [dzymator.github.io/spotreba-benzinu](https://dzymator.github.io/spotreba-benzinu/)
+
 Kalkulačka ceny cesty autem. Vybereš trasu na mapě (klikem nebo vyhledáním
 adresy), doplníš spotřebu a cenu paliva a appka spočítá, kolik cesta stojí
 celkem i na jednoho člověka v autě. Výsledek jde vytisknout nebo uložit
@@ -13,7 +15,6 @@ je nepovinný API klíč, a to jen ve tvém prohlížeči.
 
 ## Obsah
 
-- [Rychlý start](#rychlý-start)
 - [Co appka umí](#co-appka-umí)
 - [Návod k použití](#návod-k-použití)
 - [Jak získat klíč pro převýšení](#jak-získat-klíč-pro-převýšení-openrouteservice)
@@ -22,22 +23,6 @@ je nepovinný API klíč, a to jen ve tvém prohlížeči.
 - [Použité služby a jejich limity](#použité-služby-a-jejich-limity)
 - [Jak se počítá spotřeba](#jak-se-počítá-spotřeba)
 - [Pro vývoj](#pro-vývoj)
-
----
-
-## Rychlý start
-
-Stačí otevřít `index.html` v prohlížeči. Kvůli volání map a geokódování je
-ale lepší to pustit přes lokální server, aby se appka chovala stejně jako
-na ostrém webu:
-
-```bash
-python3 -m http.server 8000
-# nebo
-npx serve .
-```
-
-Pak otevři <http://localhost:8000>.
 
 ---
 
@@ -272,6 +257,17 @@ Projekt je záměrně bez build kroku - čistý HTML, CSS a JS:
 | `style.css` | Design tokeny (světlý i tmavý režim), layout, tiskové styly. |
 | `script.js` | Výpočet, práce s trasou, mapa, našeptávač, generování sestavy. |
 | `favicon.svg` | Ikona. |
+
+Ostrá verze běží na GitHub Pages z větve `master`, takže co se smergne,
+je za chvíli na <https://dzymator.github.io/spotreba-benzinu/>.
+
+**Lokální spuštění:** kvůli volání map a geokódování je lepší než otevřít
+`index.html` napřímo pustit stránku přes jednoduchý server, ať se chová
+stejně jako na ostrém webu:
+
+```bash
+python3 -m http.server 8000   # nebo: npx serve .
+```
 
 **Cache-busting:** `index.html` odkazuje na `style.css?v=N` a
 `script.js?v=N`. **Po každé úpravě CSS nebo JS to číslo zvyš** - jinak
