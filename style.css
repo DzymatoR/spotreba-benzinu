@@ -228,6 +228,98 @@ a:hover { color: var(--navy); }
 
 .rule { flex: 1; height: 1px; background: var(--line); }
 
+/* ---------- body trasy (start / zastávky / cíl) ---------- */
+.trasa-body {
+  padding: 14px 22px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trasa-radek {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trasa-hlavicka {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.trasa-ikona {
+  display: flex;
+  flex: none;
+  color: var(--ink-2);
+}
+
+.trasa-ikona-ok { color: var(--terra-strong); }
+
+.trasa-role {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.trasa-nazev {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-2);
+  opacity: .8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trasa-odebrat {
+  flex: none;
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+
+.trasa-odebrat:hover { background: var(--cream-soft); color: var(--terra-strong); }
+
+.trasa-akce {
+  padding: 10px 22px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.btn-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--terra-strong);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color .15s ease;
+}
+
+.btn-link:hover { color: var(--navy); }
+.btn-link:disabled { color: var(--ink-2); opacity: .5; cursor: not-allowed; }
+
 /* ---------- fields ---------- */
 .fields-row, .fields-grid {
   padding: 14px 22px 0;
