@@ -42,6 +42,8 @@ var accordionChevron = document.querySelector("#accordionChevron");
 
 // stoupání aktuální trasy v metrech (naplní se jen když je k dispozici OpenRouteService klíč)
 var aktualniStoupani = 0;
+// doba jízdy spočítané trasy v sekundách (0 = trasa zatím nespočítaná)
+var aktualniDobaS = 0;
 
 // ---------- stav trasy ----------
 // Body trasy v pořadí: první = start, poslední = cíl, mezi nimi zastávky.
@@ -93,7 +95,7 @@ function nazevProvozu(hodnota) {
 }
 
 // ---------- výpočet ceny ----------
-tlacitko.addEventListener("click", function () {
+function prepocitej() {
   var koeficientProvozu = Number(provoz.value) || 1;
   var efektivniSpotreba = Number(spotreba.value) * koeficientProvozu;
   var koeficientSmeru = tamZpet.checked ? 2 : 1;
@@ -135,6 +137,113 @@ tlacitko.addEventListener("click", function () {
 
   resultEmpty.hidden = true;
   resultComputed.hidden = false;
+
+  return {
+    vzdalenostJednosmer: Number(vzdalenost.value),
+    vzdalenostCelkem: efektivniVzdalenost,
+    tamZpet: tamZpet.checked,
+    spotrebaVozidla: Number(spotreba.value),
+    provozNazev: nazevProvozu(provoz.value),
+    litryZaTrasu: litryZaTrasu,
+    litryZaPrevyseni: litryZaPrevyseni,
+    celkoveLitry: celkoveLitry,
+    cenaZaLitr: Number(cena.value),
+    cenaCelkem: Number(vypocetSkupina),
+    cenaNaOsobu: Number(vypocetJednotlivec),
+    osoby: Number(osoby.value)
+  };
+}
+
+tlacitko.addEventListener("click", prepocitej);
+
+// ---------- tisková sestava (podklad k cestovním výdajům) ----------
+var tiskBtn = document.querySelector("#tiskBtn");
+var tiskDatum = document.querySelector("#tiskDatum");
+var tiskBodyEl = document.querySelector("#tiskBody");
+var tiskTrasa = document.querySelector("#tiskTrasa");
+var tiskVypocet = document.querySelector("#tiskVypocet");
+var tiskSoucet = document.querySelector("#tiskSoucet");
+
+function cislo(hodnota, desetinnych) {
+  return hodnota.toLocaleString("cs-CZ", {
+    minimumFractionDigits: desetinnych,
+    maximumFractionDigits: desetinnych
+  });
+}
+
+function pridejRadek(seznam, popis, hodnota) {
+  var dt = document.createElement("dt");
+  dt.textContent = popis;
+  var dd = document.createElement("dd");
+  dd.textContent = hodnota;
+  seznam.appendChild(dt);
+  seznam.appendChild(dd);
+}
+
+function naplnTiskovouSestavu(souhrn) {
+  tiskDatum.textContent = "Vystaveno " + new Date().toLocaleDateString("cs-CZ");
+
+  // verzi bereme z horní lišty, ať není číslo v HTML na dvou místech
+  var verzeEl = document.querySelector(".verze");
+  document.querySelector("#tiskVerze").textContent = verzeEl ? verzeEl.textContent : "";
+
+  // body trasy
+  tiskBodyEl.innerHTML = "";
+  body.forEach(function (bod, index) {
+    var li = document.createElement("li");
+    var popis = bod.nazev || bod.dotaz;
+    if (!popis && maSouradnice(bod)) { popis = bod.lat.toFixed(4) + ", " + bod.lon.toFixed(4); }
+    li.textContent = roleBodu(index) + ": " + (popis || "neurčeno");
+    tiskBodyEl.appendChild(li);
+  });
+
+  // parametry trasy
+  tiskTrasa.innerHTML = "";
+  pridejRadek(tiskTrasa, "Vzdálenost trasy", cislo(souhrn.vzdalenostJednosmer, 1) + " km");
+  if (souhrn.tamZpet) {
+    pridejRadek(tiskTrasa, "Ujeto celkem (tam a zpět)", cislo(souhrn.vzdalenostCelkem, 1) + " km");
+  }
+  if (aktualniDobaS > 0) {
+    pridejRadek(tiskTrasa, "Doba jízdy", formatujCas(aktualniDobaS) + (souhrn.tamZpet ? " (jedním směrem)" : ""));
+  }
+  if (aktualniStoupani > 0) {
+    pridejRadek(tiskTrasa, "Stoupání", Math.round(aktualniStoupani) + " m" + (souhrn.tamZpet ? " (jedním směrem)" : ""));
+  }
+
+  // výpočet spotřeby
+  tiskVypocet.innerHTML = "";
+  pridejRadek(tiskVypocet, "Spotřeba vozidla", cislo(souhrn.spotrebaVozidla, 1) + " l/100 km");
+  pridejRadek(tiskVypocet, "Zohlednění provozu", souhrn.provozNazev);
+  pridejRadek(tiskVypocet, "Palivo za trasu", cislo(souhrn.litryZaTrasu, 2) + " l");
+  if (souhrn.litryZaPrevyseni > 0) {
+    pridejRadek(tiskVypocet, "Přirážka za převýšení", cislo(souhrn.litryZaPrevyseni, 2) + " l");
+  }
+  pridejRadek(tiskVypocet, "Spotřebováno celkem", cislo(souhrn.celkoveLitry, 2) + " l");
+  pridejRadek(tiskVypocet, "Cena paliva", cislo(souhrn.cenaZaLitr, 2) + " Kč/l");
+
+  // součet
+  tiskSoucet.innerHTML = "";
+  var celkemRadek = document.createElement("div");
+  celkemRadek.className = "tisk-celkem";
+  celkemRadek.innerHTML = "<span>Celkem</span>";
+  var castka = document.createElement("strong");
+  castka.textContent = cislo(souhrn.cenaCelkem, 2) + " Kč";
+  celkemRadek.appendChild(castka);
+  tiskSoucet.appendChild(celkemRadek);
+
+  if (souhrn.osoby > 1) {
+    var osobyRadek = document.createElement("div");
+    osobyRadek.className = "tisk-osoby";
+    osobyRadek.textContent = "Při " + souhrn.osoby + " osobách v autě připadá na jednoho " +
+      cislo(souhrn.cenaNaOsobu, 2) + " Kč.";
+    tiskSoucet.appendChild(osobyRadek);
+  }
+}
+
+tiskBtn.addEventListener("click", function () {
+  // přepočítáme, ať sestava odpovídá aktuálně zadaným hodnotám
+  naplnTiskovouSestavu(prepocitej());
+  window.print();
 });
 
 // ---------- vykreslení seznamu bodů trasy ----------
@@ -293,6 +402,7 @@ function zneplatniTrasu() {
   if (trasaVrstva && mapaDostupna) { mapa.removeLayer(trasaVrstva); }
   trasaVrstva = null;
   aktualniStoupani = 0;
+  aktualniDobaS = 0;
   chipDistance.hidden = true;
   chipElevation.hidden = true;
   chipDuration.hidden = true;
@@ -434,9 +544,11 @@ vypocitatTrasu.addEventListener("click", function () {
     chipDistanceVal.textContent = Math.round(vysledek.vzdalenostKm) + " km";
 
     if (vysledek.dobaS) {
+      aktualniDobaS = vysledek.dobaS;
       chipDuration.hidden = false;
       chipDurationVal.textContent = formatujCas(vysledek.dobaS);
     } else {
+      aktualniDobaS = 0;
       chipDuration.hidden = true;
     }
 

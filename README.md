@@ -33,6 +33,13 @@ Použité služby - všechny mají zdarma dostupnou variantu:
   zohlední stoupání/klesání trasy a přičte k odhadu spotřeby přirážku
   za převýšení (nastavitelná v sekci "Upřesnění"). Klíč se ukládá jen
   lokálně v prohlížeči (localStorage), nikam se neodesílá jinam.
+- **Export do PDF:** tlačítko "Tisk / uložit do PDF" pod výsledkem
+  vykreslí samostatnou tiskovou sestavu (vyúčtování cesty jako podklad
+  k cestovním výdajům) a otevře tiskový dialog prohlížeče, kde se dá
+  zvolit "Uložit jako PDF". Záměrně bez knihovny typu jsPDF - tisk
+  přes prohlížeč dává ostrý vektorový text, funguje offline a nemá
+  problém s českou diakritikou (jsPDF by potřeboval embedovat vlastní
+  TTF font).
 - **Provoz (kolony):** živá data o dopravě zdarma reálně neexistují
   (Google/TomTom/HERE mají jen placené nebo silně omezené API). Místo
   toho je v sekci "Upřesnění" jednoduchý přepínač Plynulý / Běžný /
