@@ -1,4 +1,4 @@
-// ---------- původní prvky kalkulačky ----------
+// ---------- prvky kalkulačky ----------
 var vzdalenost = document.querySelector("#vzdalenost");
 var cena = document.querySelector("#cena");
 var spotreba = document.querySelector("#spotreba");
@@ -8,10 +8,9 @@ var jednotlivec = document.querySelector("#VyraznaCenaJ");
 var celkem = document.querySelector("#VyraznaCenaC");
 
 // ---------- prvky trasy / mapy ----------
-var startAdresa = document.querySelector("#startAdresa");
-var cilAdresa = document.querySelector("#cilAdresa");
-var najitStart = document.querySelector("#najitStart");
-var najitCil = document.querySelector("#najitCil");
+var trasaBodyEl = document.querySelector("#trasaBody");
+var pridatZastavku = document.querySelector("#pridatZastavku");
+var okruhBtn = document.querySelector("#okruhBtn");
 var vypocitatTrasu = document.querySelector("#vypocitatTrasu");
 var vymazatTrasu = document.querySelector("#vymazatTrasu");
 var trasaInfo = document.querySelector("#trasaInfo");
@@ -44,6 +43,23 @@ var accordionChevron = document.querySelector("#accordionChevron");
 
 // stoupání aktuální trasy v metrech (naplní se jen když je k dispozici OpenRouteService klíč)
 var aktualniStoupani = 0;
+
+// ---------- stav trasy ----------
+// Body trasy v pořadí: první = start, poslední = cíl, mezi nimi zastávky.
+function novyBod() {
+  return { dotaz: "", lat: null, lon: null, nazev: "", marker: null };
+}
+
+function maSouradnice(bod) {
+  return bod.lat !== null && bod.lon !== null;
+}
+
+var body = [novyBod(), novyBod()];
+
+// mapa se nastaví níže, pokud se Leaflet povede načíst
+var mapa = null;
+var mapaDostupna = false;
+var trasaVrstva = null;
 
 // ---------- akordeon: klik na hlavičku otevře/zavře Upřesnění ----------
 accordionHead.addEventListener("click", function () {
@@ -100,6 +116,7 @@ tlacitko.addEventListener("click", function () {
 
   // tagy shrnující vstupy pod výslednou cenou
   resultTags.innerHTML = "";
+  var pocetZastavek = body.length - 2;
   var tagy = [
     efektivniVzdalenost.toLocaleString("cs-CZ") + " km" + (tamZpet.checked ? " (tam a zpět)" : ""),
     Number(spotreba.value).toLocaleString("cs-CZ") + " l/100 km" +
@@ -107,6 +124,9 @@ tlacitko.addEventListener("click", function () {
     Number(cena.value).toLocaleString("cs-CZ") + " Kč/l",
     Number(osoby.value) + " " + (Number(osoby.value) === 1 ? "osoba" : "osob") + " · " + nazevProvozu(provoz.value)
   ];
+  if (pocetZastavek > 0) {
+    tagy.splice(1, 0, pocetZastavek + " " + (pocetZastavek === 1 ? "zastávka" : (pocetZastavek < 5 ? "zastávky" : "zastávek")));
+  }
   tagy.forEach(function (text) {
     var span = document.createElement("span");
     span.className = "tag";
@@ -118,75 +138,176 @@ tlacitko.addEventListener("click", function () {
   resultComputed.hidden = false;
 });
 
-// ---------- mapa (Leaflet + OpenStreetMap) ----------
-// Vše je v try/catch: pokud se Leaflet nenačte (výpadek CDN, offline, blokátor),
-// zbytek stránky (uložení ORS klíče apod.) i základní kalkulačka výše zůstanou funkční.
-try {
+// ---------- vykreslení seznamu bodů trasy ----------
+var IKONA_START = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>';
+var IKONA_ZASTAVKA = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v5M12 17v5"></path></svg>';
+var IKONA_CIL = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>';
 
-var mapa = L.map("mapa", { zoomControl: false }).setView([49.8, 15.5], 7); // střed přibližně na ČR/střední Evropu
-L.control.zoom({ position: "topright" }).addTo(mapa);
+function roleBodu(index) {
+  if (index === 0) { return "Start"; }
+  if (index === body.length - 1) { return "Cíl"; }
+  return "Zastávka " + index;
+}
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: "&copy; OpenStreetMap contributors"
-}).addTo(mapa);
+function ikonaBodu(index) {
+  if (index === 0) { return IKONA_START; }
+  if (index === body.length - 1) { return IKONA_CIL; }
+  return IKONA_ZASTAVKA;
+}
 
-var startMarker = null;
-var cilMarker = null;
-var trasaVrstva = null; // vykreslená čára trasy
+function vykresliBody() {
+  trasaBodyEl.innerHTML = "";
 
-var startBod = null; // {lat, lon}
-var cilBod = null;
+  body.forEach(function (bod, index) {
+    var radek = document.createElement("div");
+    radek.className = "trasa-radek";
 
-function nastavStart(lat, lon, popisek) {
-  startBod = { lat: lat, lon: lon };
+    // hlavička řádku: ikona + role + křížek
+    var hlavicka = document.createElement("div");
+    hlavicka.className = "trasa-hlavicka";
+
+    var ikona = document.createElement("span");
+    ikona.className = "trasa-ikona" + (maSouradnice(bod) ? " trasa-ikona-ok" : "");
+    ikona.innerHTML = ikonaBodu(index);
+    hlavicka.appendChild(ikona);
+
+    var role = document.createElement("span");
+    role.className = "trasa-role";
+    role.textContent = roleBodu(index);
+    hlavicka.appendChild(role);
+
+    if (maSouradnice(bod) && bod.nazev) {
+      var nazev = document.createElement("span");
+      nazev.className = "trasa-nazev";
+      nazev.textContent = bod.nazev;
+      hlavicka.appendChild(nazev);
+    }
+
+    if (body.length > 2) {
+      var odebrat = document.createElement("button");
+      odebrat.type = "button";
+      odebrat.className = "trasa-odebrat";
+      odebrat.title = "Odebrat bod";
+      odebrat.textContent = "×";
+      odebrat.addEventListener("click", function () {
+        odeberBod(index);
+      });
+      hlavicka.appendChild(odebrat);
+    }
+
+    radek.appendChild(hlavicka);
+
+    // pole s adresou + tlačítko Najít
+    var obal = document.createElement("span");
+    obal.className = "field-box";
+
+    var vstup = document.createElement("input");
+    vstup.type = "text";
+    vstup.value = bod.dotaz;
+    vstup.placeholder = index === 0 ? "adresa nebo místo (např. Praha)"
+      : (index === body.length - 1 ? "adresa nebo místo (např. Brno)" : "adresa nebo místo");
+    vstup.addEventListener("input", function () {
+      bod.dotaz = vstup.value;
+    });
+    vstup.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); najdiProBod(index); }
+    });
+    obal.appendChild(vstup);
+
+    var najit = document.createElement("button");
+    najit.type = "button";
+    najit.className = "find-btn";
+    najit.textContent = "Najít";
+    najit.addEventListener("click", function () { najdiProBod(index); });
+    obal.appendChild(najit);
+
+    radek.appendChild(obal);
+    trasaBodyEl.appendChild(radek);
+  });
+
+  aktualizujMarkery();
+  okruhBtn.disabled = !maSouradnice(body[0]) || body.length < 2;
+}
+
+// ---------- práce s body ----------
+function nastavBod(index, lat, lon, nazev, dotaz) {
+  var bod = body[index];
+  bod.lat = lat;
+  bod.lon = lon;
+  bod.nazev = nazev || "";
+  if (dotaz !== undefined) { bod.dotaz = dotaz; }
   mapaHint.hidden = true;
-  if (startMarker) {
-    startMarker.setLatLng([lat, lon]);
-  } else {
-    startMarker = L.marker([lat, lon], { title: "Start" }).addTo(mapa);
-  }
-  if (popisek) {
-    startMarker.bindPopup("Start: " + popisek).openPopup();
-  }
+  zneplatniTrasu();
+  vykresliBody();
 }
 
-function nastavCil(lat, lon, popisek) {
-  cilBod = { lat: lat, lon: lon };
-  if (cilMarker) {
-    cilMarker.setLatLng([lat, lon]);
-  } else {
-    cilMarker = L.marker([lat, lon], { title: "Cíl" }).addTo(mapa);
+// klik do mapy doplní první bod bez souřadnic, jinak přidá nový bod na konec (= nový cíl,
+// dosavadní cíl se tím posune na zastávku)
+function pridejBodZMapy(lat, lon) {
+  var volnyIndex = -1;
+  for (var i = 0; i < body.length; i++) {
+    if (!maSouradnice(body[i])) { volnyIndex = i; break; }
   }
-  if (popisek) {
-    cilMarker.bindPopup("Cíl: " + popisek).openPopup();
+  if (volnyIndex === -1) {
+    body.push(novyBod());
+    volnyIndex = body.length - 1;
   }
+  nastavBod(volnyIndex, lat, lon, "z mapy", lat.toFixed(4) + ", " + lon.toFixed(4));
 }
 
-function vynulujTrasu() {
-  if (startMarker) { mapa.removeLayer(startMarker); startMarker = null; }
-  if (cilMarker) { mapa.removeLayer(cilMarker); cilMarker = null; }
-  if (trasaVrstva) { mapa.removeLayer(trasaVrstva); trasaVrstva = null; }
-  startBod = null;
-  cilBod = null;
+function odeberBod(index) {
+  var bod = body[index];
+  if (bod.marker && mapaDostupna) { mapa.removeLayer(bod.marker); }
+  body.splice(index, 1);
+  if (body.length < 2) { body.push(novyBod()); }
+  zneplatniTrasu();
+  vykresliBody();
+}
+
+// vykreslená trasa už neodpovídá bodům - schovat čáru i chipy
+function zneplatniTrasu() {
+  if (trasaVrstva && mapaDostupna) { mapa.removeLayer(trasaVrstva); }
+  trasaVrstva = null;
   aktualniStoupani = 0;
-  mapaHint.hidden = false;
-  trasaInfo.textContent = "";
   chipDistance.hidden = true;
   chipElevation.hidden = true;
   chipDuration.hidden = true;
   chipEmpty.hidden = false;
 }
 
-// klik do mapy: 1. klik = start, 2. klik = cíl, 3. klik = znovu od startu
-mapa.on("click", function (e) {
-  if (!startBod || (startBod && cilBod)) {
-    // začínáme novou trasu
-    vynulujTrasu();
-    nastavStart(e.latlng.lat, e.latlng.lng, "z mapy");
-  } else {
-    nastavCil(e.latlng.lat, e.latlng.lng, "z mapy");
+function vynulujTrasu() {
+  body.forEach(function (bod) {
+    if (bod.marker && mapaDostupna) { mapa.removeLayer(bod.marker); }
+  });
+  body = [novyBod(), novyBod()];
+  zneplatniTrasu();
+  mapaHint.hidden = false;
+  trasaInfo.textContent = "";
+  vykresliBody();
+}
+
+pridatZastavku.addEventListener("click", function () {
+  // nová zastávka se vkládá před cíl
+  body.splice(body.length - 1, 0, novyBod());
+  zneplatniTrasu();
+  vykresliBody();
+});
+
+okruhBtn.addEventListener("click", function () {
+  var start = body[0];
+  if (!maSouradnice(start)) {
+    trasaInfo.textContent = "Nejdřív nastav start - okruh se vrací na něj.";
+    return;
   }
+  body.push({
+    dotaz: start.dotaz,
+    lat: start.lat,
+    lon: start.lon,
+    nazev: start.nazev || "zpět na start",
+    marker: null
+  });
+  zneplatniTrasu();
+  vykresliBody();
 });
 
 vymazatTrasu.addEventListener("click", vynulujTrasu);
@@ -207,37 +328,25 @@ function najdiMisto(dotaz) {
   });
 }
 
-najitStart.addEventListener("click", function () {
-  if (!startAdresa.value.trim()) { return; }
-  trasaInfo.textContent = "Hledám start...";
-  najdiMisto(startAdresa.value).then(function (misto) {
-    nastavStart(misto.lat, misto.lon, misto.nazev);
-    mapa.setView([misto.lat, misto.lon], 12);
+function najdiProBod(index) {
+  var bod = body[index];
+  if (!bod.dotaz.trim()) { return; }
+  trasaInfo.textContent = "Hledám " + roleBodu(index).toLowerCase() + "...";
+  najdiMisto(bod.dotaz).then(function (misto) {
+    nastavBod(index, misto.lat, misto.lon, misto.nazev);
+    if (mapaDostupna) { mapa.setView([misto.lat, misto.lon], 12); }
     trasaInfo.textContent = "";
   }).catch(function (err) {
     trasaInfo.textContent = err.message;
   });
-});
-
-najitCil.addEventListener("click", function () {
-  if (!cilAdresa.value.trim()) { return; }
-  trasaInfo.textContent = "Hledám cíl...";
-  najdiMisto(cilAdresa.value).then(function (misto) {
-    nastavCil(misto.lat, misto.lon, misto.nazev);
-    mapa.setView([misto.lat, misto.lon], 12);
-    trasaInfo.textContent = "";
-  }).catch(function (err) {
-    trasaInfo.textContent = err.message;
-  });
-});
+}
 
 // ---------- routování (vzdálenost, doba jízdy, případně převýšení) ----------
 
 // varianta bez klíče: veřejný demo server OSRM (žádné převýšení)
-function trasaOSRM(start, cil) {
-  var url = "https://router.project-osrm.org/route/v1/driving/" +
-    start.lon + "," + start.lat + ";" + cil.lon + "," + cil.lat +
-    "?overview=full&geometries=geojson";
+function trasaOSRM(souradnice) {
+  var cesta = souradnice.map(function (b) { return b.lon + "," + b.lat; }).join(";");
+  var url = "https://router.project-osrm.org/route/v1/driving/" + cesta + "?overview=full&geometries=geojson";
   return fetch(url).then(function (odpoved) { return odpoved.json(); }).then(function (data) {
     if (data.code !== "Ok" || !data.routes.length) { throw new Error("Trasu se nepodařilo najít (OSRM)."); }
     var route = data.routes[0];
@@ -251,7 +360,7 @@ function trasaOSRM(start, cil) {
 }
 
 // varianta s vlastním OpenRouteService klíčem: vzdálenost + doba + stoupání/klesání
-function trasaORS(start, cil, klic) {
+function trasaORS(souradnice, klic) {
   var url = "https://api.openrouteservice.org/v2/directions/driving-car/geojson";
   return fetch(url, {
     method: "POST",
@@ -260,7 +369,7 @@ function trasaORS(start, cil, klic) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      coordinates: [[start.lon, start.lat], [cil.lon, cil.lat]],
+      coordinates: souradnice.map(function (b) { return [b.lon, b.lat]; }),
       elevation: true
     })
   }).then(function (odpoved) {
@@ -277,24 +386,30 @@ function trasaORS(start, cil, klic) {
   });
 }
 
-function vykresliTrasu(geojson) {
+function vykresliTrasuNaMape(geojson) {
+  if (!mapaDostupna) { return; }
   if (trasaVrstva) { mapa.removeLayer(trasaVrstva); }
   trasaVrstva = L.geoJSON(geojson, { style: { color: "#C2603C", weight: 5 } }).addTo(mapa);
   mapa.fitBounds(trasaVrstva.getBounds(), { padding: [20, 20] });
 }
 
 vypocitatTrasu.addEventListener("click", function () {
-  if (!startBod || !cilBod) {
-    trasaInfo.textContent = "Nejdřív vyber start i cíl (kliknutím do mapy nebo vyhledáním adresy).";
+  var chybejici = [];
+  body.forEach(function (bod, index) {
+    if (!maSouradnice(bod)) { chybejici.push(roleBodu(index).toLowerCase()); }
+  });
+  if (chybejici.length) {
+    trasaInfo.textContent = "Chybí souřadnice: " + chybejici.join(", ") +
+      " (klikni do mapy nebo vyhledej adresu).";
     return;
   }
 
   trasaInfo.textContent = "Počítám trasu...";
   var klic = orsKlic.value.trim();
-  var slib = klic ? trasaORS(startBod, cilBod, klic) : trasaOSRM(startBod, cilBod);
+  var slib = klic ? trasaORS(body, klic) : trasaOSRM(body);
 
   slib.then(function (vysledek) {
-    vykresliTrasu(vysledek.geojson);
+    vykresliTrasuNaMape(vysledek.geojson);
     vzdalenost.value = vysledek.vzdalenostKm.toFixed(1);
 
     chipEmpty.hidden = true;
@@ -323,16 +438,48 @@ vypocitatTrasu.addEventListener("click", function () {
   });
 });
 
-} catch (chyba) {
-  // Leaflet se nenačetl (offline / blokovaný CDN) - mapa nebude fungovat,
-  // ale zbytek kalkulačky ano.
-  console.error("Mapu se nepodařilo inicializovat:", chyba);
-  trasaInfo.textContent = "Mapu se nepodařilo načíst (zkontroluj připojení k internetu). " +
-    "Vzdálenost lze zadat ručně níže.";
-  [najitStart, najitCil, vypocitatTrasu, vymazatTrasu].forEach(function (btn) {
-    btn.disabled = true;
+// ---------- mapa (Leaflet + OpenStreetMap) ----------
+// Inicializace mapy je v try/catch: když se Leaflet nenačte (výpadek CDN, offline,
+// blokátor), zbytek appky funguje dál - jen se nekreslí mapa ani čára trasy.
+// Vyhledávání adres i výpočet vzdálenosti jedou i bez ní.
+function aktualizujMarkery() {
+  if (!mapaDostupna) { return; }
+  body.forEach(function (bod, index) {
+    if (!maSouradnice(bod)) {
+      if (bod.marker) { mapa.removeLayer(bod.marker); bod.marker = null; }
+      return;
+    }
+    if (bod.marker) {
+      bod.marker.setLatLng([bod.lat, bod.lon]);
+    } else {
+      bod.marker = L.marker([bod.lat, bod.lon]).addTo(mapa);
+    }
+    bod.marker.bindPopup(roleBodu(index) + (bod.nazev ? ": " + bod.nazev : ""));
   });
 }
+
+try {
+  mapa = L.map("mapa", { zoomControl: false }).setView([49.8, 15.5], 7); // střed přibližně na ČR/střední Evropu
+  L.control.zoom({ position: "topright" }).addTo(mapa);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(mapa);
+
+  mapaDostupna = true;
+
+  mapa.on("click", function (e) {
+    pridejBodZMapy(e.latlng.lat, e.latlng.lng);
+  });
+} catch (chyba) {
+  console.error("Mapu se nepodařilo inicializovat:", chyba);
+  mapaDostupna = false;
+  trasaInfo.textContent = "Mapu se nepodařilo načíst (zkontroluj připojení k internetu). " +
+    "Body trasy jde zadat adresou, vzdálenost se spočítá i bez mapy.";
+}
+
+vykresliBody();
 
 // ---------- uložení ORS klíče v prohlížeči, ať ho uživatel nemusí zadávat pořád znovu ----------
 (function () {

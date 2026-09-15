@@ -10,6 +10,12 @@ Kalkulačka umí vybrat start a cíl na mapě (nebo vyhledáním adresy) a
 automaticky z toho spočítat vzdálenost, kterou pak použije ve výpočtu
 spotřeby. Funguje kdekoliv v Evropě (i mimo ni).
 
+Mezi start a cíl jde vložit libovolný počet **mezizastávek** - trasa pak
+vede přes ně, takže se dá vynutit jiná varianta cesty než tu, kterou by
+router zvolil sám. Tlačítko **Okruh (zpět na start)** přidá jako poslední
+bod znovu start, takže se dá spočítat i okružní jízda. Každý klik do mapy
+doplní další bod trasy (poslední je vždy cíl).
+
 Použité služby - všechny mají zdarma dostupnou variantu:
 
 - **Mapa a dlaždice:** [Leaflet](https://leafletjs.com/) +

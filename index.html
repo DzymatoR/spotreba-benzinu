@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:opsz,wght@9..40,400..700&display=swap">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
 
     <!-- Leaflet - mapa (OpenStreetMap dlaždice), zdarma, bez API klíče -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -32,7 +32,7 @@
               Benzín
             </span>
           </span>
-          <span class="verze">verze 2.1</span>
+          <span class="verze">verze 2.2</span>
         </div>
       </header>
 
@@ -56,28 +56,22 @@
             <span class="rule"></span>
           </div>
 
-          <div class="fields-row">
-            <label class="field">
-              <span class="field-label">Start</span>
-              <span class="field-box">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.2" stroke-linecap="round" class="field-icon"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
-                <input id="startAdresa" type="text" name="startAdresa" placeholder="adresa nebo místo (např. Praha)">
-                <button id="najitStart" type="button" class="find-btn">Najít</button>
-              </span>
-            </label>
-            <label class="field">
-              <span class="field-label">Cíl</span>
-              <span class="field-box">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--terra-strong)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="field-icon"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                <input id="cilAdresa" type="text" name="cilAdresa" placeholder="adresa nebo místo (např. Brno)">
-                <button id="najitCil" type="button" class="find-btn">Najít</button>
-              </span>
-            </label>
+          <div class="trasa-body" id="trasaBody"></div>
+
+          <div class="trasa-akce">
+            <button id="pridatZastavku" type="button" class="btn-link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+              Přidat zastávku
+            </button>
+            <button id="okruhBtn" type="button" class="btn-link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>
+              Okruh (zpět na start)
+            </button>
           </div>
 
           <div class="hint">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11.5 4 22l10.5-5 5-10.5L9 11.5z"></path></svg>
-            <span>Nebo klikni přímo do mapy — první klik nastaví start, druhý cíl.</span>
+            <span>Nebo klikni přímo do mapy — každý klik doplní další bod trasy, poslední je vždy cíl.</span>
           </div>
 
           <div class="map-wrap">
@@ -237,7 +231,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <script type="text/javascript" src="script.js?v=3"></script>
+    <script type="text/javascript" src="script.js?v=5"></script>
 
   </body>
 </html>
