@@ -558,7 +558,11 @@ function napojNapovedu(bod, vstup, seznam) {
         if (vstup.value.trim() !== dotaz || body.indexOf(bod) === -1) { return; }
         vykresli(vysledky);
       }).catch(function (chyba) {
-        if (chyba.name !== "AbortError") { console.error("Našeptávač selhal:", chyba); }
+        if (chyba.name === "AbortError") { return; }
+        // tiché selhání by vypadalo, že našeptávač prostě nic nenašel
+        console.error("Našeptávač selhal:", chyba);
+        trasaInfo.textContent = "Našeptávač míst je nedostupný (" + (chyba.message || chyba.name) +
+          ") - adresu jde pořád najít tlačítkem Najít.";
       });
     }, NAPOVEDA_PRODLEVA);
   });
