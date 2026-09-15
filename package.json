@@ -1,6 +1,6 @@
 {
   "name": "spotreba-benzinu",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Jednoduchá kalkulačka spotřeby benzínu",
   "main": "script.js",
   "scripts": {
