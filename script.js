@@ -803,7 +803,10 @@ function najdiNapovedu(dotaz) {
   if (napovedaRizeni) { napovedaRizeni.abort(); }
   napovedaRizeni = new AbortController();
 
-  var url = "https://photon.komoot.io/api/?limit=6&lang=cs&q=" + encodeURIComponent(dotaz);
+  // Bez parametru lang: Photon umí jen několik jazyků (en/de/fr/it) a na
+  // "cs" vracel 400 Bad Request. Ve výchozím stavu stejně vrací místní
+  // název, takže české obce vyjdou česky.
+  var url = "https://photon.komoot.io/api/?limit=6&q=" + encodeURIComponent(dotaz);
   // výsledky blíž k aktuálnímu výřezu mapy mají přednost
   if (mapaDostupna) {
     var stred = mapa.getCenter();
@@ -811,7 +814,12 @@ function najdiNapovedu(dotaz) {
   }
 
   return fetch(url, { signal: napovedaRizeni.signal }).then(function (odpoved) {
-    if (!odpoved.ok) { throw new Error("Našeptávač neodpověděl."); }
+    if (!odpoved.ok) {
+      // tělo chyby obsahuje důvod (např. nepodporovaný jazyk) - ať ho je vidět
+      return odpoved.text().then(function (telo) {
+        throw new Error("HTTP " + odpoved.status + (telo ? ": " + telo.slice(0, 160) : ""));
+      });
+    }
     return odpoved.json();
   }).then(function (data) {
     return (data.features || []).map(function (misto) {
