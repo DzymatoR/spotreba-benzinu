@@ -485,6 +485,112 @@ function ikonaBodu(index) {
   return IKONA_ZASTAVKA;
 }
 
+// napojí našeptávač na jedno pole s adresou
+function napojNapovedu(bod, vstup, seznam) {
+  var navrhy = [];
+  var aktivni = -1;
+
+  function zavri() {
+    seznam.hidden = true;
+    seznam.innerHTML = "";
+    navrhy = [];
+    aktivni = -1;
+  }
+
+  function zvyrazni() {
+    Array.prototype.forEach.call(seznam.children, function (polozka, i) {
+      polozka.classList.toggle("napoveda-aktivni", i === aktivni);
+    });
+  }
+
+  function vyber(navrh) {
+    var index = body.indexOf(bod);
+    if (index === -1) { return; }
+    zavri();
+    var popis = navrh.hlavni + (navrh.detail ? ", " + navrh.detail : "");
+    nastavBod(index, navrh.lat, navrh.lon, popis, popis);
+    if (mapaDostupna) { mapa.setView([navrh.lat, navrh.lon], 12); }
+    trasaInfo.textContent = "";
+  }
+
+  function vykresli(vysledky) {
+    navrhy = vysledky;
+    aktivni = -1;
+    seznam.innerHTML = "";
+    if (!vysledky.length) { seznam.hidden = true; return; }
+
+    vysledky.forEach(function (navrh) {
+      var polozka = document.createElement("div");
+      polozka.className = "napoveda-polozka";
+
+      var hlavni = document.createElement("span");
+      hlavni.className = "napoveda-hlavni";
+      hlavni.textContent = navrh.hlavni;
+      polozka.appendChild(hlavni);
+
+      if (navrh.detail) {
+        var detail = document.createElement("span");
+        detail.className = "napoveda-detail";
+        detail.textContent = navrh.detail;
+        polozka.appendChild(detail);
+      }
+
+      // mousedown (ne click), ať výběr proběhne dřív, než pole ztratí fokus
+      polozka.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        vyber(navrh);
+      });
+      seznam.appendChild(polozka);
+    });
+    seznam.hidden = false;
+  }
+
+  vstup.addEventListener("input", function () {
+    bod.dotaz = vstup.value;
+    var dotaz = vstup.value.trim();
+
+    if (napovedaCasovac) { clearTimeout(napovedaCasovac); }
+    if (dotaz.length < NAPOVEDA_MIN_ZNAKU) { zavri(); return; }
+
+    napovedaCasovac = setTimeout(function () {
+      najdiNapovedu(dotaz).then(function (vysledky) {
+        // mezitím se mohlo přepsat pole nebo bod zmizet
+        if (vstup.value.trim() !== dotaz || body.indexOf(bod) === -1) { return; }
+        vykresli(vysledky);
+      }).catch(function (chyba) {
+        if (chyba.name !== "AbortError") { console.error("Našeptávač selhal:", chyba); }
+      });
+    }, NAPOVEDA_PRODLEVA);
+  });
+
+  vstup.addEventListener("keydown", function (e) {
+    if (seznam.hidden || !navrhy.length) {
+      if (e.key === "Enter") { e.preventDefault(); najdiProBod(body.indexOf(bod)); }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      aktivni = (aktivni + 1) % navrhy.length;
+      zvyrazni();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      aktivni = (aktivni - 1 + navrhy.length) % navrhy.length;
+      zvyrazni();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (aktivni >= 0) { vyber(navrhy[aktivni]); }
+      else { zavri(); najdiProBod(body.indexOf(bod)); }
+    } else if (e.key === "Escape") {
+      zavri();
+    }
+  });
+
+  vstup.addEventListener("blur", function () {
+    // krátká prodleva, ať se stihne zpracovat kliknutí do seznamu
+    setTimeout(zavri, 120);
+  });
+}
+
 function vytvorVlozitZastavku() {
   var obal = document.createElement("div");
   obal.className = "trasa-vlozit";
@@ -547,21 +653,19 @@ function vykresliBody() {
 
     radek.appendChild(hlavicka);
 
-    // pole s adresou + tlačítko Najít
+    // pole s adresou + tlačítko Najít + našeptávač pod ním
+    var vstupObal = document.createElement("div");
+    vstupObal.className = "trasa-vstup";
+
     var obal = document.createElement("span");
     obal.className = "field-box";
 
     var vstup = document.createElement("input");
     vstup.type = "text";
     vstup.value = bod.dotaz;
+    vstup.autocomplete = "off";
     vstup.placeholder = index === 0 ? "adresa nebo místo (např. Praha)"
       : (index === body.length - 1 ? "adresa nebo místo (např. Brno)" : "adresa nebo místo");
-    vstup.addEventListener("input", function () {
-      bod.dotaz = vstup.value;
-    });
-    vstup.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); najdiProBod(index); }
-    });
     obal.appendChild(vstup);
 
     var najit = document.createElement("button");
@@ -571,7 +675,16 @@ function vykresliBody() {
     najit.addEventListener("click", function () { najdiProBod(index); });
     obal.appendChild(najit);
 
-    radek.appendChild(obal);
+    vstupObal.appendChild(obal);
+
+    var seznam = document.createElement("div");
+    seznam.className = "napoveda-seznam";
+    seznam.hidden = true;
+    vstupObal.appendChild(seznam);
+
+    napojNapovedu(bod, vstup, seznam);
+
+    radek.appendChild(vstupObal);
     trasaBodyEl.appendChild(radek);
 
     // nabídka vložení zastávky přesně tam, kam nový bod přibude (těsně před cíl)
@@ -661,6 +774,53 @@ okruhBtn.addEventListener("click", function () {
 });
 
 vymazatTrasu.addEventListener("click", vynulujTrasu);
+
+// ---------- našeptávač míst (Photon, zdarma, bez klíče) ----------
+// Nominatim ve svých podmínkách zakazuje stavět nad ním našeptávač (a povoluje
+// jen 1 dotaz za sekundu), proto se pro psaní po písmenech používá Photon,
+// který je na search-as-you-type přímo stavěný. Nominatim zůstává na tlačítku
+// "Najít", kde jde o jeden dotaz na akci uživatele.
+var NAPOVEDA_MIN_ZNAKU = 3;
+var NAPOVEDA_PRODLEVA = 300;
+var napovedaCasovac = null;
+var napovedaRizeni = null; // AbortController, ať se nepřekrývají odpovědi
+
+function popisMista(vlastnosti) {
+  var hlavni = vlastnosti.name ||
+    [vlastnosti.street, vlastnosti.housenumber].filter(Boolean).join(" ") ||
+    vlastnosti.city || vlastnosti.country || "";
+  var detail = [vlastnosti.city, vlastnosti.county, vlastnosti.state, vlastnosti.country]
+    .filter(Boolean)
+    .filter(function (cast, index, vse) { return cast !== hlavni && vse.indexOf(cast) === index; });
+  return { hlavni: hlavni, detail: detail.join(", ") };
+}
+
+function najdiNapovedu(dotaz) {
+  if (napovedaRizeni) { napovedaRizeni.abort(); }
+  napovedaRizeni = new AbortController();
+
+  var url = "https://photon.komoot.io/api/?limit=6&lang=cs&q=" + encodeURIComponent(dotaz);
+  // výsledky blíž k aktuálnímu výřezu mapy mají přednost
+  if (mapaDostupna) {
+    var stred = mapa.getCenter();
+    url += "&lat=" + stred.lat.toFixed(4) + "&lon=" + stred.lng.toFixed(4);
+  }
+
+  return fetch(url, { signal: napovedaRizeni.signal }).then(function (odpoved) {
+    if (!odpoved.ok) { throw new Error("Našeptávač neodpověděl."); }
+    return odpoved.json();
+  }).then(function (data) {
+    return (data.features || []).map(function (misto) {
+      var popis = popisMista(misto.properties || {});
+      return {
+        lat: misto.geometry.coordinates[1],
+        lon: misto.geometry.coordinates[0],
+        hlavni: popis.hlavni,
+        detail: popis.detail
+      };
+    }).filter(function (misto) { return misto.hlavni; });
+  });
+}
 
 // ---------- geokódování adresy (Nominatim / OpenStreetMap, zdarma, bez klíče) ----------
 function najdiMisto(dotaz) {
