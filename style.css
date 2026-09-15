@@ -99,6 +99,20 @@ a:hover { color: var(--navy); }
   color: var(--ink);
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.verze {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
 .pillnav {
   display: flex; align-items: center; gap: 4px;
   padding: 4px;
